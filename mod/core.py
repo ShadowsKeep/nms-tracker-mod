@@ -71,38 +71,99 @@ class Panel:
     rows: list
 
 
-def repair_panel(plan: 'RepairPlan', needs_screen: int, name=lambda gid: gid, max_rows: int = 5) -> Panel:
-    """Turn a ship repair plan into the panel text.
+def repair_panel(board: 'Board', name=lambda gid: gid, max_rows: int = 5) -> Panel:
+    """Turn the repair board into the panel text.
 
     Rows: parts you can repair now, parts waiting on materials, parts that need their own repair
-    screen, then the materials you are shortest of. Bars show each count's share of all damage,
-    or for a material how much of it you already have.
+    screen, then the materials you are shortest of for all the damage. Bars show each count's
+    share of all damage, or for a material how much of it you already have.
     """
-    waiting = sum(1 for p in plan.slots if p.order is None)
-    total = plan.total + needs_screen
+    total = len(board.parts)
     if total == 0:
         return Panel('Ship Repairs', 'No damage', [PanelRow('All parts working', '0', 100.0)])
+
+    def count(how):
+        return sum(1 for b in board.parts if b.how == how)
 
     def share(n):
         return round(100.0 * n / total, 1)
 
-    rows = [
-        PanelRow('Repair now (F7)', str(len(plan.batch)), share(len(plan.batch))),
-        PanelRow('Need materials', str(waiting), share(waiting)),
-        PanelRow('Need repair screen', str(needs_screen), share(needs_screen)),
-    ]
-    need_all = {}
-    for p in plan.slots:
-        for m, q in merge_cost(p.slot.cost).items():
-            need_all[m] = need_all.get(m, 0) + q
-    for gid, missing in sorted(plan.missing_for_all.items(), key=lambda kv: -kv[1]):
-        if len(rows) >= max_rows:
+    rows = [PanelRow(label, str(count(how)), share(count(how)))
+            for label, how in (('Repair now (F7)', 'now'), ('Need materials', 'materials'),
+                               ('Need repair screen', 'screen'))]
+    for m in board.materials:
+        if len(rows) >= max_rows or m.missing <= 0:
             break
-        needed = need_all.get(gid, missing)
-        have = max(0, needed - missing)
-        rows.append(PanelRow(f'Short: {name(gid)}', str(missing), round(100.0 * have / needed, 1) if needed else 0.0))
+        rows.append(PanelRow(name(m.item_id), have_needed(m),
+                             round(100.0 * m.have / m.needed, 1) if m.needed else 0.0))
     subtitle = f'{total} damaged part' + ('' if total == 1 else 's')
     return Panel('Ship Repairs', subtitle, rows[:max_rows])
+
+
+@dataclass
+class BoardPart:
+    slot: Slot
+    how: str                    # 'now' (F7 repairs it), 'materials' (F7 once you have them), 'screen'
+    cost: dict                  # what is left to pay, {} when unknown
+
+
+@dataclass
+class BoardMaterial:
+    item_id: str
+    needed: int                 # for every damaged part with a known cost
+    have: int
+
+    @property
+    def missing(self) -> int:
+        return max(0, self.needed - self.have)
+
+
+@dataclass
+class Board:
+    """The REPAIRS screen's two lists: every damaged part, and every material they need."""
+    parts: list                 # BoardPart: repair now, then need materials, then need repair screen
+    materials: list             # BoardMaterial: most missing first
+    unknown: int = 0            # parts whose remaining cost could not be read
+
+
+def have_needed(m: BoardMaterial) -> str:
+    """'0 / 75': what the player holds / what all the damage needs (have capped at needed, so a
+    big stock doesn't crowd the row)."""
+    return f'{min(m.have, m.needed):,} / {m.needed:,}'
+
+
+def board_text(board: Board, name=lambda gid: gid) -> str:
+    """One log line with what the REPAIRS screen shows, so a test run's report can be checked."""
+    counts = {h: sum(1 for b in board.parts if b.how == h) for h in ('now', 'materials', 'screen')}
+    text = (f'{len(board.parts)} damaged: {counts["now"]} repair now, {counts["materials"]} need materials, '
+            f'{counts["screen"]} need repair screen')
+    if board.unknown:
+        text += f', {board.unknown} with unknown cost'
+    if board.materials:
+        text += '; materials (have / needed): ' + ', '.join(
+            f'{name(m.item_id)} {have_needed(m)}' for m in board.materials)
+    return text
+
+
+def repair_board(parts, in_place, inventory) -> Board:
+    """`parts` are Slots with what is left to pay; `in_place` holds the keys F7 may repair from
+    anywhere (the rest need their repair screen). Materials cover every part, F7 or not."""
+    plan = plan_repairs([p for p in parts if p.key in in_place], inventory)
+    now = {s.key for s in plan.batch}
+    rank = {'now': 0, 'materials': 1, 'screen': 2}
+    board_parts = []
+    for p in parts:
+        how = 'now' if p.key in now else 'materials' if p.key in in_place else 'screen'
+        board_parts.append(BoardPart(p, how, merge_cost(p.cost)))
+    board_parts.sort(key=lambda b: rank[b.how])            # stable: keeps the game's order inside a group
+    stock = {m: max(0, int(n)) for m, n in (inventory or {}).items()}
+    need = {}
+    for b in board_parts:
+        for m, q in b.cost.items():
+            need[m] = need.get(m, 0) + q
+    mats = [BoardMaterial(m, q, stock.get(m, 0)) for m, q in need.items()]
+    mats.sort(key=lambda m: (-m.missing, -m.needed, m.item_id))
+    return Board(board_parts, mats, unknown=sum(1 for p in parts if p.cost is None))
 
 
 def merge_cost(cost) -> dict:

@@ -51,19 +51,35 @@ def make_store(buf_addr, rows, width=10, height=2, capacity=20):
 
 
 def make_repair_buffer(ps_addr, entries):
-    """Write cGcPlayerState.RepairTechBuffer with entries of (group, ship, x, y)."""
+    """Write cGcPlayerState.RepairTechBuffer with entries of (group, ship, x, y[, steps]);
+    steps are (id, damage, installed) written as the entry's InventoryContainer.Slots."""
     arr = ctypes.create_string_buffer(max(len(entries), 1) * game.REPAIR_ENTRY_SIZE)
-    for i, (group, ship, x, y) in enumerate(entries):
+    keep = [arr]
+    for i, entry in enumerate(entries):
+        group, ship, x, y = entry[:4]
         e = ctypes.addressof(arr) + i * game.REPAIR_ENTRY_SIZE
         ctypes.c_int32.from_address(e + 0x1A0).value = x
         ctypes.c_int32.from_address(e + 0x1A4).value = y
         ctypes.c_int32.from_address(e + 0x1A8).value = ship
         ctypes.c_int32.from_address(e + 0x1AC).value = group
+        steps = entry[4] if len(entry) > 4 else []
+        if steps:
+            els = (game.nmse.cGcInventoryElement * len(steps))()
+            for k, (sid, dmg, installed) in enumerate(steps):
+                a = ctypes.addressof(els[k])
+                ctypes.memmove(a, sid.encode().ljust(0x10, b'\0'), 0x10)
+                ctypes.c_int32.from_address(a + 0x10).value = k
+                ctypes.c_float.from_address(a + 0x1C).value = dmg
+                ctypes.c_uint32.from_address(a + 0x24).value = 1
+                ctypes.c_uint8.from_address(a + 0x29).value = int(installed)
+            ctypes.c_uint64.from_address(e + 0x10).value = ctypes.addressof(els)
+            ctypes.c_uint32.from_address(e + 0x18).value = len(steps)
+            keep.append(els)
     base = ps_addr + game.REPAIR_BUFFER
     ctypes.c_uint32.from_address(base).value = len(entries)
     ctypes.c_uint32.from_address(base + 4).value = len(entries)
     ctypes.c_uint64.from_address(base + 8).value = ctypes.addressof(arr)
-    return arr
+    return keep
 
 
 class FakePlayer:
@@ -250,6 +266,8 @@ class NamesTest(GameCallTestBase):
     def test_load_reads_all_three_tables(self):
         names = game.Names()
         self.assertEqual(names.load(self.reality()), 3)
+        self.assertEqual([names.kind(g) for g in ('FUEL1', '^NANOTUBES', 'LAUNCHER', 'NOPE')],
+                         [game.SUBSTANCE, game.PRODUCT, game.TECHNOLOGY, None])
 
     def test_prefers_the_normal_case_name_key(self):
         from types import SimpleNamespace as NS
@@ -411,6 +429,57 @@ class CostTest(unittest.TestCase):
             game._internal.BASE_ADDRESS, game.build_supported = orig_base, orig_supported
 
 
+@unittest.skipUnless(HAVE_NMSPY, 'NMS.py not installed')
+class BoardTest(unittest.TestCase):
+    """Remaining costs, shaped like save slot 1 on 2026-09-30: a component with a started step
+    repair (one step paid), an untouched component, a part being installed with a started repair,
+    and an affordable installed part."""
+    REQ = {'SHIPSLOT_DMG4': (('LUSH1', 300), ('ROBOT1', 20)), 'SHIPSLOT_DMG9': (('COPPER', 150),),
+           'SHIPROCKETS': (('FUEL1', 100), ('LAND1', 50)), 'LAUNCHER': (('FUEL1', 20),)}
+
+    def setUp(self):
+        self.p = FakePlayer(
+            general=[('SHIPSLOT_DMG4', 5, 1, 1, 1.0, 1, True), ('SHIPSLOT_DMG9', 4, 4, 3, 1.0, 1, True)],
+            tech=[('SHIPROCKETS', 2, 1, -1, 1.0, 1, False), ('LAUNCHER', 0, 0, 0, 1.0, 1, True)],
+            personal=[('FUEL1', 0, 0, 60, 0.0, 0)],
+            in_progress=[(4, 1, 5, 1, [('R0_SHIPSL247927', 1.0, True), ('R1_SHIPSL247927', 0.0, True)]),
+                         (5, 1, 2, 1, [('R0_SHIPROCKETS', 1.0, False), ('R1_SHIPROCKETS', 0.0, False)])],
+        )
+
+    def test_started_repairs_read_steps(self):
+        self.assertEqual(game.started_repairs(self.p.ps), {
+            (4, 1, 5, 1): [(0, True, True), (1, False, True)],
+            (5, 1, 2, 1): [(0, True, False), (1, False, False)],
+        })
+
+    def test_targets_unchanged(self):
+        targets, needs_screen = game.ship_repair_targets(self.p.ps)
+        self.assertEqual([t[:4] for t in targets], [('SHIPSLOT_DMG9', 4, 4, 4), ('LAUNCHER', 5, 0, 0)])
+        self.assertEqual(needs_screen, ['SHIPSLOT_DMG4', 'SHIPROCKETS'])
+
+    def test_remaining_cost(self):
+        req = self.REQ['SHIPSLOT_DMG4']
+        self.assertEqual(game.remaining_cost(req, None, True, 0.5), (('LUSH1', 150), ('ROBOT1', 10)))
+        self.assertEqual(game.remaining_cost(req, None, False, 0.5), (('LUSH1', 300), ('ROBOT1', 20)))
+        self.assertEqual(game.remaining_cost(req, [(0, True, True), (1, False, True)], True, 0.5), (('LUSH1', 150),))
+        self.assertEqual(game.remaining_cost(req, [(0, False, True), (1, False, True)], True, 0.5), ())
+        self.assertIsNone(game.remaining_cost(req, [(5, True, True)], True, 0.5))    # no such requirement
+        self.assertIsNone(game.remaining_cost(None, [(0, True, True)], True, 0.5))
+        self.assertIsNone(game.remaining_cost(req, [(0, True, True)], True, None))   # factor unknown
+
+    def test_board(self):
+        board = game.repair_board(self.p.ps, self.REQ, 0.5)
+        self.assertEqual([(b.slot.item_id, b.how, b.cost) for b in board.parts], [
+            ('LAUNCHER', 'now', {'FUEL1': 10}),
+            ('SHIPSLOT_DMG9', 'materials', {'COPPER': 75}),
+            ('SHIPSLOT_DMG4', 'screen', {'LUSH1': 150}),
+            ('SHIPROCKETS', 'screen', {'FUEL1': 100}),
+        ])
+        self.assertEqual([(m.item_id, m.needed, m.have, m.missing) for m in board.materials], [
+            ('LUSH1', 150, 0, 150), ('COPPER', 75, 0, 75), ('FUEL1', 110, 60, 50)])
+        self.assertEqual(board.unknown, 0)
+
+
 class RepairLoopTest(unittest.TestCase):
     """repair_all decisions with plain fake callables."""
 
@@ -495,6 +564,7 @@ class ModEntryTest(unittest.TestCase):
         m = self.load()
         mod = m.NMSTrackerMod()
         self.assertEqual(sorted((h._hook_func_name, h._hook_time.name) for h in mod.hooks), [
+            ('GameGrid.DoInventory', 'BEFORE'),
             ('GameRepair.CanRepairTechnology', 'AFTER'),
             ('GameTabs.DrawPageSelectBar', 'AFTER'), ('GameTabs.DrawPageSelectBar', 'BEFORE'),
             ('GameTabs.OpenPage', 'AFTER'), ('GameTabs.OpenPage', 'BEFORE'),
@@ -506,7 +576,7 @@ class ModEntryTest(unittest.TestCase):
         self.assertTrue(getattr(m.NMSTrackerMod, '_no_gui', False))
         self.assertEqual(len(mod._custom_callbacks), 1)
 
-    def test_summary_text(self):
+    def test_screen_panel_from_game_memory(self):
         m = self.load()
         mod = m.NMSTrackerMod()
         p = FakePlayer(
@@ -520,11 +590,42 @@ class ModEntryTest(unittest.TestCase):
         orig = game.repair_factor
         try:
             game.repair_factor = lambda: 0.5
-            text = mod._summary_text(p.ps)
+            board = mod._board(p.ps)
         finally:
             game.repair_factor = orig
-        self.assertEqual(text, 'Ship Repairs - 3 damaged parts, 1 can be repaired now (F7), 1 needs materials, '
-                               '1 needs its repair screen - short of 5 ROBOT1')
+        panel = m.core.repair_panel(board, mod._names.name, max_rows=m.screen.ROWS)
+        self.assertEqual((panel.title, panel.subtitle), ('Ship Repairs', '3 damaged parts'))
+        self.assertEqual(board.unknown, 1)               # SHIPROCKETS: no requirements known here
+        self.assertEqual([(r.label, r.value) for r in panel.rows], [
+            ('Repair now (F7)', '1'), ('Need materials', '1'), ('Need repair screen', '1'), ('ROBOT1', '5 / 10')])
+
+    def test_grids_from_game_memory(self):
+        m = self.load()
+        mod = m.NMSTrackerMod()
+        p = FakePlayer(
+            general=[('SHIPSLOT_DMG9', 4, 4, 3, 1.0, 1, True)],
+            tech=[('SHIPROCKETS', 2, 1, -1, 1.0, 1, False)],
+            personal=[('COPPER', 0, 0, 20, 0.0, 0)],
+            in_progress=[(5, 1, 2, 1, [('R0_SHIPROCKETS', 1.0, False), ('R1_SHIPROCKETS', 0.0, False)])],
+        )
+        mod._requirements = {'SHIPSLOT_DMG9': (('COPPER', 150),), 'SHIPROCKETS': (('FUEL1', 100), ('LAND1', 50))}
+        mod._names._keys, mod._names._kinds = {}, {'COPPER': game.SUBSTANCE, 'FUEL1': game.SUBSTANCE}
+        orig = game.repair_factor
+        try:
+            game.repair_factor = lambda: 0.5
+            mod.board = mod._board(p.ps)
+            mod._fill_grids(p.ps)
+        finally:
+            game.repair_factor = orig
+        for store in (mod.grids.parts, mod.grids.materials):     # what the grid hook does before each draw
+            store.build(m.display.construct_like_game)
+            store.apply(10)
+        parts = game.elements(game.store_at(mod.grids.parts.address))
+        self.assertEqual([(r[0], r[1], r[2], r[4], r[6]) for r in parts],
+                         [('SHIPSLOT_DMG9', 0, 0, 1.0, True), ('SHIPROCKETS', 1, 0, 1.0, False)])
+        mats = game.store_at(mod.grids.materials.address)
+        self.assertEqual([(str(e.Id).strip('\x00'), int(e.Amount), int(e.MaxAmount)) for e in mats.mStore],
+                         [('FUEL1', 0, 100), ('COPPER', 20, 75)])     # have / needed, most missing first
 
     def test_settings_hide_every_pymhf_window(self):
         from pymhf.utils.parse_toml import read_pymhf_settings

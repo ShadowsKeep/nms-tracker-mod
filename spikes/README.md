@@ -166,6 +166,69 @@ page `manager+0x17018` changes frames later (0x8F7860). v0.2 keeps REPAIRS while
 or switching to the Starship page, and ignores repeat clicks mid-switch. The offline check now
 switches pages over several frames; with the v0.1 rule it fails at the same point as in game.
 
+**REPAIRS screen (mod v0.5, `mod/screen.py`, no spike):** while REPAIRS is selected, the
+Starship page's right-hand panel shows the repair summary and the grids are hidden. Static scan
+(`work/re/notes_inventory_panel.txt`): for the Ship page the game fills the whole panel every
+frame *before* DrawPageSelectBar and renders later, so the mod writes the panel from its
+after-hook on DrawPageSelectBar and it shows in the same frame; the next normal Starship frame
+puts the game's own content back by itself.
+
+- Page root `*(page+0x14468)`, page enum `*(i32*)(page+0x14478)` (1 = Starship).
+- Title: the game's `SetPageTitle` (RVA 0x7C9350, `(page, main, sub, bool)`).
+- Rows: the game's `StatRow` (RVA 0x6A9FD0, `(row, label, value, mainW xmm3, bonusW [rsp+20],
+  iconId, compare)`) on `STAT_BOX > LIVE_STATS > BASE_STAT_BAR1..4`; a full bar is 320 units.
+- Hidden for the frame: `SECTION1`, the top `CLASS_BOX`, `SQU_INV_TECH`, `SQU_INV_REGULAR`,
+  `SQU_TECH_BIG`, `SQU_ITEM_BIG`, `TECHHEADER`, `CARGOHEADER`, `EDITGRP`, `FILTERS`.
+
+v0.5.0 run (2026-09-30, both saves): the tab, title, rows, bars and hidden grids all showed
+(screenshot: "Ship Repairs", Repair now 0 / Need materials 1 / Need repair screen 10 / Short:
+Activated Copper 75). Three problems:
+
+1. **Leaving REPAIRS on save 1 read a freed element** (`access violation reading
+   0x544F8C` in `element_id`, caught by ctypes as OSError, no harm done). "REPAIRS left (page 7
+   opened)": every page open reloads the layout (0x8F7860 -> 0x8DDC80); the root pointer stayed
+   the same but its elements were freed, and the restore step checked the cached ones.
+2. The hint written into `SECTION1 > NATURAL` is a 58-unit wide scrolling field: clipped, looped
+   ("...ials, then press F7 Gatl") and ran into row 1.
+3. The class badge stayed. The live UI dump (spike S3) has **two** `CLASS_BOX` layers: a top one
+   (found from the root, the game un-hides it every frame at 0x90613C; the mod hid that one) and
+   `STAT_BOX > BASE_STATS > DATA > SECTION2 > CLASS_BOX`, the visible badge. The game never
+   un-hides the second one (0x6AA510 writes no hidden flag), so hiding it would stick.
+
+v0.5.1: the mod changes only what the game rewrites itself on every Starship frame (title, rows
+1-4, SECTION1 / top CLASS_BOX / grid hidden flags), so nothing is put back on leave and the restore
+step is gone. Never touched: NATURAL's text, `BASE_STAT_BAR5`, the SECTION2 badge (kept: it shows
+the ship's class). Cached element addresses live only while REPAIRS stays on screen: dropped on
+every OpenPage, on another page, a new root, or a frame gap over 0.25 s; the per-frame ID check
+reads through `ctypes.string_at`, which turns an access violation into OSError. SUBTEXT (the
+subtitle) did not show in game; not pursued.
+
+v0.5.1 run (2026-09-30, both saves): **pass.** Clean panel (title, the ship's class badge, 4
+rows; no scrolling text), no errors; REPAIRS left for page 7 in both runs with nothing logged.
+F7 on REPAIRS showed the game's own message ("not enough materials for any repair on your ship -
+short of 75 Activated Copper - 10 parts need their repair screen"). The save (read-only) confirms
+the split: the one damaged component with no repair started (`SHIPSLOT_DMG9`) is the F7 target;
+the other 8 components and the 2 technologies each have a `RepairTechBuffer` entry, i.e. a step
+repair already started in their repair screen, so repairing them in place would pay twice.
+Components get steps too (`R0_SHIPSL<n>`...), once their repair screen has been opened.
+
+Leaving REPAIRS by clicking Starship or with A/D has not been run with the screen yet (only
+page 7, the menu closing).
+
+**REPAIRS grids (mod v0.6.0, `mod/grids.py` + `mod/display.py`):** the Starship page's own tech and
+cargo grids draw display-only copies: damaged parts ("Repair") and the materials they still need
+("Materials", amount = have, max = needed). Static analysis in `work/re/notes_inventory_grid.txt`
+(DoInventory 0x6AD330 is hooked before; locked, empty slot actions, mask 0; stores built by the
+game's constructor 0x4CA2A0; real grids while an item is held; sort buttons hidden). The owner
+accepted that the game marks drawn items as "seen".
+
+v0.6.0 run (2026-09-30, save slot 1): no errors, no crash. Saves backed up first; both grids swapped
+(11 parts in SQU_INV_TECH, 7 materials in SQU_INV_REGULAR, 10 columns); both header labels found;
+REPAIRS shown for 27 s, left for page 7. The board logged: Paraffinium 0 / 450, Chromatic Metal
+8 / 420, Copper 0 / 200, Pure Ferrite 2 / 125, Magnetised Ferrite 16 / 100, Activated Copper 0 / 75,
+Wiring Loom 1 / 3. Not yet seen: a screenshot of the grids (icons, the "have/needed" slot text),
+and a check that clicking / dragging / hovering does nothing.
+
 The game's archives (`GAMEDATA\PCBANKS\NMSARC.*.pak`) are in Hello Games' newer **HGPA**
 format (magic `HGPA`, checked 2026-09-29), not PSARC, so an up-to-date tool is needed.
 Owner: install NMS Mod Tool (Nexus #4312, needs the .NET 10 Desktop Runtime), browse to the
@@ -176,7 +239,7 @@ game's archives. Then Claude reads the MXML.
 
 Extract the inventory page UI files with NMS Mod Tool (Nexus #4312) into `../work/`, clone
 the Starship tab as a "Repairs" tab in an EXML patch, and from code set its text and catch a
-button press. Keep the first option that works:
+button press. Keep the first option that works (it was (a), done by code instead of EXML):
 
 - (a) a full new tab next to Exosuit / Starship
 - (b) a native "REPAIR ALL" button and summary on the existing Starship tab
@@ -184,18 +247,23 @@ button press. Keep the first option that works:
 
 Owner installs each test build into `GAMEDATA\MODS\NMSTracker\` and sends screenshots.
 
-## NMS.py fixes found (offer upstream only with the owner's OK)
+## Differences from NMS.py (build differences, not NMS.py bugs)
 
-Found against NMS.py 180132.0 and game build 179666. Both are confirmed in the game's code
-(`GetInventory(group)` at RVA 0x47BDB0 is called with `playerState + 0x900`).
+Everything here was measured on game build **179666**. NMS.py 180132.0 targets build **180132**,
+so a different offset is expected, not a mistake in NMS.py. monkeyman192 confirmed on 2026-09-30
+that the frontend manager is `Data + 0x859090` in 180132; in 179666 it is `Data + 0x849020`. Check
+each of these on 180132 before reporting anything upstream (and only with the owner's OK):
 
-1. `cGcPlayerState.mShipInventoriesTechOnly` is declared at 0xAA28, but it is at **0xAB28**
-   (cargo array 0x8FC8 + 12 x 0x248). 0xAA28 points into `mShipInventoriesCargo[11]`.
-2. `InventoryChoice.Ship_Cargo = 5` / `Ship_Tech = 6` are swapped: group 5 is the ship's tech
-   inventory (+0xAB28) and 6 is its cargo (+0x8FC8).
+1. Ship tech inventories: `cGcPlayerState + 0xAB28` in 179666 (cargo array 0x8FC8 +
+   12 x 0x248); NMS.py has `mShipInventoriesTechOnly` at 0xAA28.
+2. `GetInventory(group)` (RVA 0x47BDB0, called with `playerState + 0x900`): group 5 is the
+   ship's tech inventory and 6 its cargo in 179666; NMS.py's `InventoryChoice` has
+   `Ship_Cargo = 5`, `Ship_Tech = 6`.
+3. `AddTimedMessage` takes 11 arguments in 179666; NMS.py lists 10.
 
-Also noted: 21 of NMS.py's 377 signature hooks don't match this build (mostly render and
-update hooks, none that this mod uses), and 5 match more than once.
+Also noted on 179666: 21 of NMS.py's 377 signature hooks don't match (mostly render and update
+hooks, none that this mod uses), and 5 match more than once. That is expected for a build NMS.py
+wasn't made for.
 
 ## Results
 

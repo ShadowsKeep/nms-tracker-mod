@@ -47,7 +47,7 @@ from pymhf.gui.decorators import no_gui
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
-from mod import backup, core, game, tab  # noqa: E402
+from mod import backup, core, display, game, grids, screen, tab  # noqa: E402
 
 from nmspy.common import gameData  # noqa: E402
 from nmspy.decorators import main_loop  # noqa: E402
@@ -71,7 +71,7 @@ def plural(n: int, word: str) -> str:
 class NMSTrackerMod(Mod):
     __author__ = 'Shadowskeep LLC'
     __description__ = 'REPAIRS inventory tab; F7 repairs the open repair screen, or your whole ship'
-    __version__ = '0.4.0'
+    __version__ = '0.6.0'
 
     def __init__(self):
         super().__init__()
@@ -85,6 +85,14 @@ class NMSTrackerMod(Mod):
         self._requirements = None       # tech id -> repair requirements, from the game's own table
         self.tab = tab.RepairsTab(logger, self._tab_changed)
         self.tab.set_enabled(False)     # switched on once the game build is known to be supported
+        self.screen = screen.RepairsScreen(logger)
+        self._screen_stale = True       # recompute the REPAIRS screen content on the next frame
+        self._screen_time = 0.0
+        self._screen_failed = False
+        self.board = core.Board([], [])     # damaged parts + materials, refreshed with the screen
+        self._board_logged = None
+        self.grids = grids.RepairGrids(logger)   # the REPAIRS grids: display-only copies, locked
+        self._grids_ok = None                    # None until REPAIRS first opens (saves backed up first)
 
     # Every time the game's own menu asks "can this be afforded?", check that our cost rule
     # (full cost = not FullyInstalled) gives the same flag. If it ever differs, F7 stops.
@@ -118,6 +126,15 @@ class NMSTrackerMod(Mod):
     @tab.GameTabs.OpenPage.after
     def _tab_open_after(self, this, liPage, lbFlag, _result_):
         self.tab.after_open(this, liPage, lbFlag, _result_)
+        self.screen.forget()                    # a page open reloads the layout: old elements are gone
+
+    # ── the REPAIRS grids: all logic in mod/grids.py ─────────────────────────
+    @grids.GameGrid.DoInventory.before
+    def _grid_before(self, this, lpStore, lpLayer, lbAccessible, lpSlotActions, lbViewOnly, lpOutFlag,
+                     liMask, liMinRows, liColumns, liSlotSize, lbNoScroll):
+        # a tuple here draws a display store, locked, instead of the game's own grid
+        return self.grids.before_do_inventory(this, lpStore, lpLayer, lbAccessible, lpSlotActions, lbViewOnly,
+                                              lpOutFlag, liMask, liMinRows, liColumns, liSlotSize, lbNoScroll)
 
     @tab.GameTabs.DrawPageSelectBar.before
     def _tab_draw_before(self, this, lpBarTop, lpTabList, lbShow):
@@ -126,34 +143,80 @@ class NMSTrackerMod(Mod):
     @tab.GameTabs.DrawPageSelectBar.after
     def _tab_draw_after(self, this, lpBarTop, lpTabList, lbShow):
         self.tab.after_draw(this, lpBarTop, lpTabList, lbShow)
+        try:
+            if self.tab.showing:
+                if self._grids_ok is None:
+                    self._grids_ok = self._backup_before_grids()
+                self._refresh_screen()
+                self.screen.draw(this, self._grid_mode())   # after the game filled the page: ours shows this frame
+            else:
+                self.screen.forget()               # nothing to put back: the game redraws its own panel
+        except Exception:
+            if not self._screen_failed:             # once: this runs every frame
+                self._screen_failed = True
+                logger.exception('REPAIRS screen failed')
+        finally:
+            # the grids are drawn earlier in the NEXT frame (DoInventory runs inside the page body)
+            self.grids.active = bool(self.tab.showing and self._grids_ok)
+            self.grids.frame_done()
+        return None
+
+    def _grid_mode(self) -> str:
+        if self.grids.drawn:
+            return screen.GRIDS_MOD
+        if self.grids.held:
+            return screen.GRIDS_REAL                # holding an item: the real grids stay usable
+        return screen.GRIDS_HIDDEN
+
+    def _backup_before_grids(self) -> bool:
+        """The grids are drawn by the game from mod memory: back the saves up first, once a session."""
+        if self._backed_up:
+            return True
+        try:
+            made = backup.backup_all()
+        except Exception:
+            logger.exception('Backing up the saves failed')
+            made = []
+        if not made:
+            logger.warning('Could not back up your saves: the REPAIRS grids stay off this session')
+            return False
+        self._backed_up = True
+        logger.info(f'Backed up {len(made)} save slot(s) to {made[0].parent} before showing the REPAIRS grids')
+        return True
+
+    def _refresh_screen(self):
+        """Recompute the REPAIRS screen at most twice a second (and right after F7 / selecting)."""
+        now = time.monotonic()
+        if not self._screen_stale and now - self._screen_time < 0.5:
+            return
+        ps = gameData.player_state
+        if ps is None:
+            return
+        self._load_game_data()
+        self.board = self._board(ps)
+        self.screen.set_content(core.repair_panel(self.board, self._names.name, max_rows=screen.ROWS))
+        self._fill_grids(ps)
+        self._screen_stale, self._screen_time = False, now
+        text = core.board_text(self.board, self._names.name)
+        if text != self._board_logged:              # only when what the screen shows changes
+            self._board_logged = text
+            logger.info(f'REPAIRS screen: {text}')
+
+    def _board(self, ps) -> core.Board:
+        return game.repair_board(ps, self._requirements or {}, game.repair_factor())
+
+    def _fill_grids(self, ps):
+        """Damaged parts (top grid) and the materials they need (bottom grid), as display copies.
+        The grid hook writes them into the stores right before each draw."""
+        self.grids.parts.set_items(display.part_items(self.board.parts, game.part_rows(ps)))
+        self.grids.materials.set_items(display.material_items(self.board.materials, self._names.kind))
+        if self.grids.parts.ready:
+            self.grids.parts.set_style(*game.store_style(ps, 5))
+            self.grids.materials.set_style(*game.store_style(ps, 6))
 
     def _tab_changed(self, active: bool, why: str):
-        """REPAIRS selected: show the ship's repair summary (runs on the game thread)."""
-        if not active:
-            return
-        try:
-            ps = gameData.player_state
-            if ps is None:
-                return
-            self._load_game_data()
-            self._say(self._summary_text(ps))
-        except Exception:
-            logger.exception('Could not show the repair summary')
-
-    def _summary_text(self, ps) -> str:
-        targets, needs_screen = game.ship_repair_targets(ps)
-        plan = game.ship_plan(ps, self._requirements or {}, game.repair_factor())
-        panel = core.repair_panel(plan, len(needs_screen), self._names.name)
-        if panel.subtitle == 'No damage':
-            return 'Ship Repairs - no damage, nothing to repair'
-        now, waiting, screen = (int(r.value) for r in panel.rows[:3])
-        parts = [panel.subtitle, f'{now} can be repaired now (F7)']
-        if waiting:
-            parts.append(f'{waiting} ' + ('needs' if waiting == 1 else 'need') + ' materials')
-        if screen:
-            parts.append(f'{screen} ' + ('needs its' if screen == 1 else 'need their') + ' repair screen')
-        short = game.shortfall_text(plan, self._names.name, limit=2)
-        return 'Ship Repairs - ' + ', '.join(parts) + (f' - short of {short}' if short else '')
+        """REPAIRS selected or left: the screen itself shows the summary now."""
+        self._screen_stale = True
 
     @on_key_pressed(REPAIR_KEY)
     def repair_key(self):
@@ -254,6 +317,7 @@ class NMSTrackerMod(Mod):
             result = action()
         finally:
             self._busy = False
+            self._screen_stale = True               # the REPAIRS screen shows the new numbers next frame
         report = {
             'made': time.strftime('%Y-%m-%d %H:%M:%S'),
             'game_build': game.GAME_BUILD,

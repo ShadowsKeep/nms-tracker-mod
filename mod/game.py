@@ -17,6 +17,7 @@ Rules kept here:
 import ctypes
 import functools
 import math
+import re
 from ctypes import c_bool, c_float, c_int32, c_uint32, c_uint64
 from ctypes import wintypes
 from typing import Annotated
@@ -37,12 +38,14 @@ GAME_BUILD = 179666
 STORE_SIZE = 0x248
 INVENTORIES_OFFSET = 0x900      # GetInventory() is called on cGcPlayerState + 0x900
 INVENTORIES_ARRAY = 0x910       # cGcPlayerState.mInventories
-# Primary-ship stores by the group number GetInventory() uses. NMS.py 180132.0 has
-# mShipInventoriesTechOnly at 0xAA28 (wrong) and InventoryChoice 5/6 swapped.
+# Primary-ship stores by the group number GetInventory() uses, in build 179666. NMS.py 180132.0
+# (made for build 180132) has mShipInventoriesTechOnly at 0xAA28 and InventoryChoice 5/6 the
+# other way round: build differences, so read these from 179666 itself.
 SHIP_STORES = {4: ('general', 0x7458), 5: ('tech', 0xAB28), 6: ('cargo', 0x8FC8)}
 GROUP_REPAIR_STEPS = 24         # the steps of the part whose repair screen is open
-TECHNOLOGY = 1                  # cGcInventoryType.Technology
+SUBSTANCE, TECHNOLOGY, PRODUCT = 0, 1, 2   # cGcInventoryType
 MAX_STEPS = 64                  # safety cap for one repair run
+STEP_ID = re.compile(r'^R(\d+)_')   # repair step ids: "R%d_%.12s" (0xEA92F0)
 REPAIR_BUFFER = 0x182A8         # cGcPlayerState: parts with started step repairs
 REPAIR_ENTRY_SIZE = 0x1B0       # sizeof(cGcRepairTechData)
 
@@ -159,25 +162,32 @@ class Names:
 
     def __init__(self):
         self._keys = None
+        self._kinds = {}                # id -> cGcInventoryType of the table it came from
         self._cache = {}
 
     def load(self, reality) -> int:
         """Read the name keys once from cGcRealityManager. Returns how many were found."""
-        keys = {}
-        tables = [(reality.mpSubstanceTable, 'Table'), (reality.mpProductTable, 'Table'),
-                  (reality.mpTechnologyTable, 'Table')]
-        for ptr, field in tables:
+        keys, kinds = {}, {}
+        tables = [(reality.mpSubstanceTable, SUBSTANCE), (reality.mpProductTable, PRODUCT),
+                  (reality.mpTechnologyTable, TECHNOLOGY)]
+        for ptr, kind in tables:
             try:
-                for entry in getattr(ptr.contents, field):
+                for entry in ptr.contents.Table:
                     gid = str(entry.ID).strip('\x00 ')
+                    if gid:
+                        kinds.setdefault(gid, kind)
                     # NameLower is the normal-case name ("Chromatic Metal"); Name is capitals.
                     key = str(getattr(entry, 'NameLower', '') or '').strip('\x00 ') or str(entry.Name).strip('\x00 ')
                     if gid and key:
                         keys.setdefault(gid, key)
             except Exception:
                 continue
-        self._keys = keys
+        self._keys, self._kinds = keys, kinds
         return len(keys)
+
+    def kind(self, gid: str, default: int = None):
+        """The item's inventory type (substance / product / technology), or `default`."""
+        return self._kinds.get(gid.lstrip('^'), default)
 
     def name(self, gid: str, translate=None) -> str:
         gid = gid.lstrip('^')
@@ -313,8 +323,8 @@ def full_cost(item) -> bool:
     return not item[6]
 
 
-def repairs_in_progress(ps) -> set:
-    """(group, ship, x, y) of every part with a started step repair (PlayerStateData.RepairTechBuffer).
+def _repair_entries(ps):
+    """(entry address, (group, ship, x, y)) for every started step repair (RepairTechBuffer).
 
     In memory: cGcPlayerState+0x182A8 = tk_vector<cGcRepairTechData> {u32 alloc, u32 count, ptr},
     entries 0x1B0 bytes with InventoryIndex +0x1A0, InventorySubIndex +0x1A8, InventoryType +0x1AC."""
@@ -323,16 +333,61 @@ def repairs_in_progress(ps) -> set:
     count = ctypes.c_uint32.from_address(base + 4).value
     ptr = ctypes.c_uint64.from_address(base + 8).value
     if not ptr or count == 0 or count > alloc or count > 256:
-        return set()
-    out = set()
+        return
     for i in range(count):
         e = ptr + i * REPAIR_ENTRY_SIZE
         x = ctypes.c_int32.from_address(e + 0x1A0).value
         y = ctypes.c_int32.from_address(e + 0x1A4).value
         ship = ctypes.c_int32.from_address(e + 0x1A8).value
         group = ctypes.c_int32.from_address(e + 0x1AC).value
-        out.add((group, ship, x, y))
+        yield e, (group, ship, x, y)
+
+
+def repairs_in_progress(ps) -> set:
+    """(group, ship, x, y) of every part with a started step repair."""
+    return {key for _e, key in _repair_entries(ps)}
+
+
+def started_repairs(ps) -> dict:
+    """{(group, ship, x, y): [(step, damaged, installed), ...]} for every started step repair.
+
+    An entry's MaintenanceContainer.InventoryContainer.Slots (cTkDynamicArray at +0x10: pointer,
+    u32 count at +0x18) holds the steps "R<i>_<part>", one per requirement i of the part
+    (0xEC07E0, 0x10AC9B0); DamageFactor 0 = that step is paid. Seen in a real save: component
+    steps are named from a seed (R0_SHIPSL247927), so the step number is all that is used."""
+    out = {}
+    for e, key in _repair_entries(ps):
+        ptr = ctypes.c_uint64.from_address(e + 0x10).value
+        n = ctypes.c_uint32.from_address(e + 0x18).value
+        steps = []
+        if ptr and 0 < n <= MAX_STEPS:
+            for el in map_struct(ptr, nmse.cGcInventoryElement * n):
+                gid, _x, _y, _amount, dmg, _typ, installed = row(el)
+                m = STEP_ID.match(gid)
+                if m:
+                    steps.append((int(m.group(1)), dmg > 0, installed))
+        out[key] = steps
     return out
+
+
+def damaged_parts(ps) -> list:
+    """Every damaged part of the current ship, in the game's store order:
+    (id, group, x, y, installed, steps); steps is None when no step repair was started."""
+    primary = int(ps.miPrimaryShip)
+    started = started_repairs(ps)
+    return [(item[0], group, item[1], item[2], item[6], started.get((group, primary, item[1], item[2])))
+            for group in SHIP_STORES for item in damaged_tech(ship_store(ps, group))]
+
+
+def part_rows(ps) -> dict:
+    """{(group, x, y): row} for every damaged part of the current ship (for the REPAIRS grid)."""
+    return {(group, r[1], r[2]): r for group in SHIP_STORES for r in damaged_tech(ship_store(ps, group))}
+
+
+def store_style(ps, group: int) -> tuple:
+    """(stack size group, class) of one of the current ship's stores, for a display copy."""
+    addr = get_addressof(ship_store(ps, group))
+    return ctypes.c_int16.from_address(addr + 0xB8).value, ctypes.c_int32.from_address(addr + 0x100).value
 
 
 def ship_repair_targets(ps) -> tuple:
@@ -346,16 +401,12 @@ def ship_repair_targets(ps) -> tuple:
     - the part is not installed yet: RepairTechnology clears the damage but never sets
       FullyInstalled (only the game's finish step 0x10AD8A0 does), so it would be left half done.
     """
-    primary = int(ps.miPrimaryShip)
-    started = repairs_in_progress(ps)
     targets, needs_screen = [], []
-    for group in SHIP_STORES:
-        for item in damaged_tech(ship_store(ps, group)):
-            gid, x, y, installed = item[0], item[1], item[2], item[6]
-            if (group, primary, x, y) in started or not installed:
-                needs_screen.append(gid)
-            else:
-                targets.append((gid, group, x, y, full_cost(item)))
+    for gid, group, x, y, installed, steps in damaged_parts(ps):
+        if steps is not None or not installed:
+            needs_screen.append(gid)
+        else:
+            targets.append((gid, group, x, y, not installed))
     return targets, needs_screen
 
 
@@ -441,6 +492,39 @@ def ship_plan(ps, requirements: dict, factor) -> core.RepairPlan:
                        cost=part_cost(requirements.get(gid), full, factor))
              for gid, group, x, y, full in targets]
     return core.plan_repairs(slots, materials(ps))
+
+
+def remaining_cost(requirements, steps, installed: bool, factor):
+    """What is still to pay for a part: all of it (the part's cost rule) when no step repair was
+    started, else only its unpaid steps (step i costs requirement i, at the step's own rule).
+    None when unknown."""
+    if steps is None:
+        return part_cost(requirements, not installed, factor)
+    if not requirements:
+        return None
+    out = []
+    for n, damaged, step_installed in steps:
+        if not damaged:
+            continue
+        if n >= len(requirements):
+            return None
+        cost = part_cost(requirements[n:n + 1], not step_installed, factor)
+        if cost is None:
+            return None
+        out.extend(cost)
+    return tuple(out)
+
+
+def repair_board(ps, requirements: dict, factor) -> core.Board:
+    """Every damaged part of the current ship with what is left to pay, and the materials all of
+    it needs against what the player holds (for the REPAIRS screen's two grids)."""
+    parts, in_place = [], set()
+    for gid, group, x, y, installed, steps in damaged_parts(ps):
+        parts.append(core.Slot(key=(group, x, y), item_id=gid, name=gid,
+                               cost=remaining_cost(requirements.get(gid), steps, installed, factor)))
+        if steps is None and installed:
+            in_place.add((group, x, y))
+    return core.repair_board(parts, in_place, materials(ps))
 
 
 def steps_plan(ps, steps, requirements: dict, factor) -> core.RepairPlan:

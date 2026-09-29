@@ -1,0 +1,40 @@
+2026-09-30 00:02:38,497 root                     INFO   Loading pyMHF...
+2026-09-30 00:02:38,726 pymem                    DEBUG  Process 40116 is being debugged
+2026-09-30 00:02:40,560 root                     INFO   pyMHF injection complete!
+2026-09-30 00:02:40,560 root                     INFO   Loading mods
+2026-09-30 00:02:40,615 pymem                    DEBUG  Process 40116 is being debugged
+2026-09-30 00:02:40,763 root                     INFO   Loaded 3 mods and 9 hooks in 0.203s
+2026-09-30 00:02:40,768 pymhf.core.utils         WARNING Cannot find window handle for PID 40116
+2026-09-30 00:02:40,770 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-30 00:02:50,550 root                     INFO   New State: APPCORESERVICES
+2026-09-30 00:02:50,552 NMSTracker               INFO   Game build 179666: supported. F7 repairs; REPAIRS tab on.
+2026-09-30 00:02:52,137 root                     INFO   New State: APPGLOBALLOAD
+2026-09-30 00:03:00,196 root                     INFO   New State: MODESELECTOR
+2026-09-30 00:03:04,154 root                     INFO   New State: APPLOCALLOAD
+2026-09-30 00:03:20,975 root                     INFO   New State: APPVIEW
+2026-09-30 00:03:24,242 NMSTracker               INFO   REPAIRS tab drawn in slot 4 (after 3 game tabs)
+2026-09-30 00:03:25,972 NMSTracker               INFO   REPAIRS selected (page 1 opened)
+2026-09-30 00:03:25,972 NMSTracker               INFO   REPAIRS clicked: asked the game for the Starship page
+2026-09-30 00:03:26,226 NMSTracker               INFO   Loaded 2706 item names from the game
+2026-09-30 00:03:26,229 NMSTracker               INFO   Loaded repair costs for 393 technologies; repair factor 0.5
+2026-09-30 00:03:26,626 NMSTracker               INFO   REPAIRS screen drawn (8 grid layers hidden, 5 rows)
+2026-09-30 00:03:35,013 NMSTracker               INFO   your ship has nothing to repair
+2026-09-30 00:03:38,257 NMSTracker               INFO   REPAIRS left (page 7 opened)
+2026-09-30 00:03:38,269 NMSTracker               ERROR  screen restore failed
+Traceback (most recent call last):
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\mod\screen.py", line 213, in restore
+    el = self._elements(page)
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\mod\screen.py", line 133, in _elements
+    if cached is not None and cached['root'] == root and all(
+                                                         ~~~^
+            element_id(addr) == ident for addr, ident in cached['check']):
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\mod\screen.py", line 134, in <genexpr>
+    element_id(addr) == ident for addr, ident in cached['check']):
+    ~~~~~~~~~~^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\mod\screen.py", line 80, in element_id
+    return ctypes.string_at(data + 0x48, 16).split(b'\x00', 1)[0].decode('ascii', 'replace')
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "%USERPROFILE%\\AppData\\Local\\Programs\\Python\\Python313\\Lib\ctypes\__init__.py", line 548, in string_at
+    return _string_at(ptr, size)
+OSError: exception: access violation reading 0x0000000000544F8C

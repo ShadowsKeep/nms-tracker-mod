@@ -40,9 +40,9 @@ from nmspy.decorators import main_loop
 logger = logging.getLogger('S1')
 OUT = Path(__file__).resolve().parent
 
-# NMS.py 180132.0 declares cGcPlayerState.mShipInventoriesTechOnly at 0xAA28, which lies inside
-# the cargo array (0x8FC8 + 12 * 0x248 = 0xAB28). The game's code uses 0xAB28 (static scan,
-# work/re). Read it from there; this is a candidate upstream fix.
+# Build 179666's code uses 0xAB28 for the ship tech inventories (static scan, work/re), right after
+# the cargo array (0x8FC8 + 12 * 0x248). NMS.py 180132.0 has 0xAA28, for build 180132: a build
+# difference, so read it from 179666 itself.
 SHIP_TECH_OFFSET = 0xAB28
 STORE_SIZE = 0x248
 SPECIAL_DAMAGE = {'Broken', 'BlockedByBrokenTech'}
