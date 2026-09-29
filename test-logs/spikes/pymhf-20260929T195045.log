@@ -1,0 +1,23 @@
+2026-09-29 19:50:52,905 root                     INFO   Loading pyMHF...
+2026-09-29 19:50:54,129 pymem                    DEBUG  Process 27696 is being debugged
+2026-09-29 19:50:56,464 pymem                    DEBUG  Process 27696 is being debugged
+2026-09-29 19:50:57,123 root                     INFO   pyMHF injection complete!
+2026-09-29 19:50:57,123 root                     INFO   Loading mods
+2026-09-29 19:50:57,856 root                     INFO   Loaded 3 mods and 8 hooks in 0.732s
+2026-09-29 19:50:57,860 pymhf.core.utils         WARNING Cannot find window handle for PID 27696
+2026-09-29 19:50:58,030 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 19:51:06,952 root                     INFO   New State: APPCORESERVICES
+2026-09-29 19:51:08,608 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 19:51:20,026 root                     INFO   New State: MODESELECTOR
+2026-09-29 19:51:32,974 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 19:51:52,290 root                     INFO   New State: APPVIEW
+2026-09-29 19:52:35,149 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=0,0, fullCost=False) -> False this_is_player_state=True
+2026-09-29 19:52:40,932 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=1,0, fullCost=False) -> False this_is_player_state=True
+2026-09-29 19:53:27,615 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=1,0, fullCost=False) -> True this_is_player_state=True
+2026-09-29 19:53:27,615 S2                       INFO   [watch] RepairTechnology(group=24, slot=1,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 19:53:40,657 S2                       WARNING Not yet: first repair one damaged slot yourself in the normal inventory menu.
+2026-09-29 20:00:01,731 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=0,0, fullCost=False) -> True this_is_player_state=True
+2026-09-29 20:00:01,732 S2                       INFO   [watch] RepairTechnology(group=24, slot=0,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:00:03,232 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=1,0, fullCost=False) -> True this_is_player_state=True
+2026-09-29 20:00:03,232 S2                       INFO   [watch] RepairTechnology(group=24, slot=1,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:00:12,502 S2                       WARNING Not yet: first repair one damaged slot yourself in the normal inventory menu.

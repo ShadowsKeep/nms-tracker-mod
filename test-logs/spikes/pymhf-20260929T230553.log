@@ -1,0 +1,31 @@
+2026-09-29 23:05:53,802 root                     INFO   Loading pyMHF...
+2026-09-29 23:05:54,011 pymem                    DEBUG  Process 33640 is being debugged
+2026-09-29 23:05:56,224 pymem                    DEBUG  Process 33640 is being debugged
+2026-09-29 23:05:56,854 root                     INFO   pyMHF injection complete!
+2026-09-29 23:05:56,855 root                     INFO   Loading mods
+2026-09-29 23:05:57,546 root                     INFO   Loaded 3 mods and 8 hooks in 0.692s
+2026-09-29 23:05:57,551 pymhf.core.utils         WARNING Cannot find window handle for PID 33640
+2026-09-29 23:05:57,552 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 23:06:07,047 root                     INFO   New State: APPCORESERVICES
+2026-09-29 23:06:08,654 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 23:06:16,744 root                     INFO   New State: MODESELECTOR
+2026-09-29 23:06:21,852 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 23:06:38,304 root                     INFO   New State: APPVIEW
+2026-09-29 23:06:42,751 S3c                      INFO   REPAIRS drawn in slot 4 (after 3 game tabs)
+2026-09-29 23:06:46,645 S3c                      INFO   REPAIRS selected (page 0 opened)
+2026-09-29 23:06:46,693 S3c                      INFO   REPAIRS left (page is no longer Starship)
+2026-09-29 23:06:48,564 S3c                      INFO   REPAIRS selected (page 0 opened)
+2026-09-29 23:06:48,568 S3c                      INFO   REPAIRS left (page is no longer Starship)
+2026-09-29 23:06:51,514 S3c                      INFO   REPAIRS selected (page 0 opened)
+2026-09-29 23:06:51,518 S3c                      INFO   REPAIRS left (page is no longer Starship)
+2026-09-29 23:06:53,397 S3c                      INFO   REPAIRS selected (page 0 opened)
+2026-09-29 23:06:53,401 S3c                      INFO   REPAIRS left (page is no longer Starship)
+2026-09-29 23:06:55,780 S3c                      INFO   REPAIRS selected (page 0 opened)
+2026-09-29 23:06:55,785 S3c                      INFO   REPAIRS left (page is no longer Starship)
+2026-09-29 23:06:58,414 S3c                      INFO   REPAIRS selected (page 0 opened)
+2026-09-29 23:06:58,418 S3c                      INFO   REPAIRS left (page is no longer Starship)
+2026-09-29 23:07:12,797 S3c                      INFO   REPAIRS selected (page 4 opened)
+2026-09-29 23:07:12,802 S3c                      INFO   REPAIRS left (page is no longer Starship)
+2026-09-29 23:07:14,552 S3c                      INFO   REPAIRS selected (clicked on the Starship page)
+2026-09-29 23:07:14,636 S3c                      INFO   REPAIRS drawn selected in slot 4
+2026-09-29 23:07:33,231 S3c                      INFO   REPAIRS left (page 7 opened)

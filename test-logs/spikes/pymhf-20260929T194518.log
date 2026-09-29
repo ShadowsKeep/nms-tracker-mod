@@ -1,0 +1,55 @@
+2026-09-29 19:45:28,083 root                     INFO   Loading pyMHF...
+2026-09-29 19:45:29,461 pymem                    DEBUG  Process 49028 is being debugged
+2026-09-29 19:45:32,704 pymem                    DEBUG  Process 49028 is being debugged
+2026-09-29 19:45:33,554 root                     INFO   pyMHF injection complete!
+2026-09-29 19:45:33,554 root                     INFO   Loading mods
+2026-09-29 19:45:34,232 root                     INFO   Loaded 3 mods and 5 hooks in 0.678s
+2026-09-29 19:45:34,237 pymhf.core.utils         WARNING Cannot find window handle for PID 49028
+2026-09-29 19:45:34,498 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 19:45:50,087 root                     INFO   New State: APPCORESERVICES
+2026-09-29 19:45:51,901 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 19:46:00,425 root                     INFO   New State: MODESELECTOR
+2026-09-29 19:46:11,345 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 19:46:31,897 root                     INFO   New State: APPVIEW
+2026-09-29 19:46:49,442 S1                       INFO   Read requested; it will run on the next game frame.
+2026-09-29 19:46:49,477 S1                       INFO   Ship 2: 12 damaged slots, 9 damage markers. Report: %USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s1-20260929-194649.json
+2026-09-29 19:46:49,477 S1                       INFO     [general 5,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:46:49,477 S1                       INFO     [general 3,2] SHIPSLOT_DMG5 damage=1.0 cost: 100 LAND3, 120 STELLAR2, 90 ASTEROID2
+2026-09-29 19:46:49,477 S1                       INFO     [general 6,2] SHIPSLOT_DMG6 damage=1.0 cost: 300 STELLAR2, 6 TECH_COMP
+2026-09-29 19:46:49,478 S1                       INFO     [general 2,4] SHIPSLOT_DMG8 damage=1.0 cost: 250 LAND2, 150 ASTEROID2
+2026-09-29 19:46:49,478 S1                       INFO     [general 4,4] SHIPSLOT_DMG9 damage=1.0 cost: 150 EX_YELLOW
+2026-09-29 19:46:49,478 S1                       INFO     [general 2,1] SPACEGUNK5 damage=1.0 cost: unknown
+2026-09-29 19:46:49,478 S1                       INFO     [tech 5,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:46:49,478 S1                       INFO     [tech 6,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:46:49,478 S1                       INFO     [tech 5,2] SHIPSLOT_DMG5 damage=1.0 cost: 100 LAND3, 120 STELLAR2, 90 ASTEROID2
+2026-09-29 19:46:49,478 S1                       INFO     [tech 6,2] SHIPSLOT_DMG6 damage=1.0 cost: 300 STELLAR2, 6 TECH_COMP
+2026-09-29 19:46:49,478 S1                       INFO     [tech 1,1] HDRIVEBOOST1 damage=1.0 cost: 250 STELLAR2, 3 TECH_COMP
+2026-09-29 19:46:49,478 S1                       INFO     [tech 2,1] SHIPROCKETS damage=1.0 cost: 200 YELLOW2, 100 FUEL2
+2026-09-29 19:47:10,642 S1                       INFO   Read requested; it will run on the next game frame.
+2026-09-29 19:47:10,673 S1                       INFO   Ship 2: 12 damaged slots, 9 damage markers. Report: %USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s1-20260929-194710.json
+2026-09-29 19:47:10,673 S1                       INFO     [general 5,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:47:10,673 S1                       INFO     [general 3,2] SHIPSLOT_DMG5 damage=1.0 cost: 100 LAND3, 120 STELLAR2, 90 ASTEROID2
+2026-09-29 19:47:10,673 S1                       INFO     [general 6,2] SHIPSLOT_DMG6 damage=1.0 cost: 300 STELLAR2, 6 TECH_COMP
+2026-09-29 19:47:10,673 S1                       INFO     [general 2,4] SHIPSLOT_DMG8 damage=1.0 cost: 250 LAND2, 150 ASTEROID2
+2026-09-29 19:47:10,673 S1                       INFO     [general 4,4] SHIPSLOT_DMG9 damage=1.0 cost: 150 EX_YELLOW
+2026-09-29 19:47:10,673 S1                       INFO     [general 2,1] SPACEGUNK5 damage=1.0 cost: unknown
+2026-09-29 19:47:10,673 S1                       INFO     [tech 5,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:47:10,673 S1                       INFO     [tech 6,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:47:10,673 S1                       INFO     [tech 5,2] SHIPSLOT_DMG5 damage=1.0 cost: 100 LAND3, 120 STELLAR2, 90 ASTEROID2
+2026-09-29 19:47:10,673 S1                       INFO     [tech 6,2] SHIPSLOT_DMG6 damage=1.0 cost: 300 STELLAR2, 6 TECH_COMP
+2026-09-29 19:47:10,673 S1                       INFO     [tech 1,1] HDRIVEBOOST1 damage=1.0 cost: 250 STELLAR2, 3 TECH_COMP
+2026-09-29 19:47:10,673 S1                       INFO     [tech 2,1] SHIPROCKETS damage=1.0 cost: 200 YELLOW2, 100 FUEL2
+2026-09-29 19:49:22,830 S1                       INFO   Read requested; it will run on the next game frame.
+2026-09-29 19:49:22,844 S1                       INFO   Ship 2: 12 damaged slots, 9 damage markers. Report: %USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s1-20260929-194922.json
+2026-09-29 19:49:22,844 S1                       INFO     [general 5,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:49:22,844 S1                       INFO     [general 3,2] SHIPSLOT_DMG5 damage=1.0 cost: 100 LAND3, 120 STELLAR2, 90 ASTEROID2
+2026-09-29 19:49:22,844 S1                       INFO     [general 6,2] SHIPSLOT_DMG6 damage=1.0 cost: 300 STELLAR2, 6 TECH_COMP
+2026-09-29 19:49:22,844 S1                       INFO     [general 2,4] SHIPSLOT_DMG8 damage=1.0 cost: 250 LAND2, 150 ASTEROID2
+2026-09-29 19:49:22,845 S1                       INFO     [general 4,4] SHIPSLOT_DMG9 damage=1.0 cost: 150 EX_YELLOW
+2026-09-29 19:49:22,845 S1                       INFO     [general 2,1] SPACEGUNK5 damage=1.0 cost: unknown
+2026-09-29 19:49:22,845 S1                       INFO     [tech 5,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:49:22,845 S1                       INFO     [tech 6,1] SHIPSLOT_DMG4 damage=1.0 cost: 300 LUSH1, 20 ROBOT1
+2026-09-29 19:49:22,845 S1                       INFO     [tech 5,2] SHIPSLOT_DMG5 damage=1.0 cost: 100 LAND3, 120 STELLAR2, 90 ASTEROID2
+2026-09-29 19:49:22,845 S1                       INFO     [tech 6,2] SHIPSLOT_DMG6 damage=1.0 cost: 300 STELLAR2, 6 TECH_COMP
+2026-09-29 19:49:22,845 S1                       INFO     [tech 1,1] HDRIVEBOOST1 damage=1.0 cost: 250 STELLAR2, 3 TECH_COMP
+2026-09-29 19:49:22,845 S1                       INFO     [tech 2,1] SHIPROCKETS damage=1.0 cost: 200 YELLOW2, 100 FUEL2

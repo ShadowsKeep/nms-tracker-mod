@@ -1,0 +1,28 @@
+2026-09-29 20:47:23,805 root                     INFO   Loading pyMHF...
+2026-09-29 20:47:25,095 pymem                    DEBUG  Process 27292 is being debugged
+2026-09-29 20:47:28,057 pymem                    DEBUG  Process 27292 is being debugged
+2026-09-29 20:47:28,842 root                     INFO   pyMHF injection complete!
+2026-09-29 20:47:28,843 root                     INFO   Loading mods
+2026-09-29 20:47:29,561 root                     INFO   Loaded 3 mods and 6 hooks in 0.719s
+2026-09-29 20:47:29,566 pymhf.core.utils         WARNING Cannot find window handle for PID 27292
+2026-09-29 20:47:29,840 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 20:47:37,862 root                     INFO   New State: APPCORESERVICES
+2026-09-29 20:47:39,434 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 20:47:47,640 root                     INFO   New State: MODESELECTOR
+2026-09-29 20:47:53,753 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 20:48:10,951 root                     INFO   New State: APPVIEW
+2026-09-29 20:48:21,032 NMSTracker               WARNING Open a damaged part's repair screen (the one listing its repair steps), then press F7.
+2026-09-29 20:48:24,679 NMSTracker               WARNING Open a damaged part's repair screen (the one listing its repair steps), then press F7.
+2026-09-29 20:49:08,432 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:49:25,298 NMSTracker               INFO   Learned the game's cost setting for ['R0_UT_ENERGY']: full cost = True
+2026-09-29 20:49:34,479 NMSTracker               WARNING Open a damaged part's repair screen (the one listing its repair steps), then press F7.
+2026-09-29 20:49:45,129 NMSTracker               WARNING Open a damaged part's repair screen (the one listing its repair steps), then press F7.
+2026-09-29 20:50:01,144 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:50:02,843 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:50:06,411 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:50:12,761 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:50:13,011 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:50:13,244 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:50:13,444 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:50:15,212 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.
+2026-09-29 20:50:15,477 NMSTracker               WARNING Repair (or try to repair) one step of this part by hand first, so the mod can see the cost setting the game uses for it. Then press F7 for the rest.

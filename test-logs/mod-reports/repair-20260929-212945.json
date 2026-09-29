@@ -1,0 +1,14 @@
+{
+  "made": "2026-09-29 21:29:45",
+  "game_build": 179666,
+  "kind": "repair screen",
+  "part_steps": [
+    "R0_GROUND483132",
+    "R1_GROUND483132"
+  ],
+  "repaired": [],
+  "stopped": "nothing affordable",
+  "materials": {},
+  "ship_damage_before": [],
+  "ship_damage_after": []
+}

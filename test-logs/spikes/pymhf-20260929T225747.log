@@ -1,0 +1,15 @@
+2026-09-29 22:57:47,232 root                     INFO   Loading pyMHF...
+2026-09-29 22:57:47,471 pymem                    DEBUG  Process 19840 is being debugged
+2026-09-29 22:57:49,837 pymem                    DEBUG  Process 19840 is being debugged
+2026-09-29 22:57:50,498 root                     INFO   pyMHF injection complete!
+2026-09-29 22:57:50,498 root                     INFO   Loading mods
+2026-09-29 22:57:51,116 root                     INFO   Loaded 3 mods and 6 hooks in 0.618s
+2026-09-29 22:57:51,123 pymhf.core.utils         WARNING Cannot find window handle for PID 19840
+2026-09-29 22:57:51,124 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 22:58:00,581 root                     INFO   New State: APPCORESERVICES
+2026-09-29 22:58:02,174 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 22:58:10,235 root                     INFO   New State: MODESELECTOR
+2026-09-29 22:58:17,671 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 22:58:34,285 root                     INFO   New State: APPVIEW
+2026-09-29 22:58:39,409 S3b                      INFO   Tab bar: page = Data+0x84bbc0 (expected 0x84bbc0), list = Data+0x8a4d80 (expected 0x8a4d80)
+2026-09-29 22:58:39,529 S3b                      INFO   REPAIRS label drawn in slot 4 (after 3 game tabs)

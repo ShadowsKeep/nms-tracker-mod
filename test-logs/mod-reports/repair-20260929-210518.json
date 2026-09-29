@@ -1,0 +1,32 @@
+{
+  "made": "2026-09-29 21:05:18",
+  "game_build": 179666,
+  "part_steps": [
+    "R0_BOLT",
+    "R1_BOLT"
+  ],
+  "full_cost": true,
+  "repaired": [
+    "R1_BOLT"
+  ],
+  "stopped": "nothing affordable",
+  "materials": {
+    "NANOTUBES": -3
+  },
+  "steps_now": [
+    [
+      "R0_BOLT",
+      0,
+      0,
+      1.0
+    ],
+    [
+      "R1_BOLT",
+      1,
+      0,
+      0.0
+    ]
+  ],
+  "ship_damage_before": [],
+  "ship_damage_after": []
+}

@@ -1,0 +1,71 @@
+2026-09-29 20:09:16,393 root                     INFO   Loading pyMHF...
+2026-09-29 20:09:17,684 pymem                    DEBUG  Process 6612 is being debugged
+2026-09-29 20:09:19,633 root                     INFO   pyMHF injection complete!
+2026-09-29 20:09:19,633 root                     INFO   Loading mods
+2026-09-29 20:09:19,673 pymem                    DEBUG  Process 6612 is being debugged
+2026-09-29 20:09:19,822 root                     INFO   Loaded 3 mods and 8 hooks in 0.188s
+2026-09-29 20:09:19,826 pymhf.core.utils         WARNING Cannot find window handle for PID 6612
+2026-09-29 20:09:20,024 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 20:09:28,476 root                     INFO   New State: APPCORESERVICES
+2026-09-29 20:09:30,360 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 20:09:42,329 root                     INFO   New State: MODESELECTOR
+2026-09-29 20:09:49,902 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 20:10:09,144 root                     INFO   New State: APPVIEW
+2026-09-29 20:10:23,591 S2                       WARNING Not yet: first repair one damaged slot yourself in the normal inventory menu.
+2026-09-29 20:10:38,673 S2                       WARNING Not yet: first repair one damaged slot yourself in the normal inventory menu.
+2026-09-29 20:10:43,484 S2                       ERROR  after_can_repair logging failed
+Traceback (most recent call last):
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 263, in after_can_repair
+    item = _at(map_struct(store_addr, nms.cGcInventoryStore), x, y) if store_addr else []
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 160, in _at
+    return [e for e in _elements(store) if (e[1], e[2]) == (x, y)]
+                       ~~~~~~~~~^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 155, in _elements
+    out.append((gid, int(el.Index.X), int(el.Index.Y), int(el.Amount), float(el.DamageFactor), int(el.Type)))
+                                                                                               ~~~^^^^^^^^^
+ValueError: invalid literal for int() with base 10: b'\x01\x00\x00\x00'
+2026-09-29 20:10:43,486 S2                       INFO   [watch] RepairTechnology(group=24, slot=0,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:10:43,835 S2                       ERROR  after_repair logging failed
+Traceback (most recent call last):
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 244, in after_repair
+    f'real ship slot now: {_real_ship_slot(ps, x, y)}')
+                           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 211, in _real_ship_slot
+    return {label: _at(_store(ps_addr, off, primary), x, y) for label, off in SHIP_STORES.values()}
+                   ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 160, in _at
+    return [e for e in _elements(store) if (e[1], e[2]) == (x, y)]
+                       ~~~~~~~~~^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 155, in _elements
+    out.append((gid, int(el.Index.X), int(el.Index.Y), int(el.Amount), float(el.DamageFactor), int(el.Type)))
+                                                                                               ~~~^^^^^^^^^
+ValueError: invalid literal for int() with base 10: b'\x00\x00\x00\x00'
+2026-09-29 20:10:46,084 S2                       ERROR  after_can_repair logging failed
+Traceback (most recent call last):
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 263, in after_can_repair
+    item = _at(map_struct(store_addr, nms.cGcInventoryStore), x, y) if store_addr else []
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 160, in _at
+    return [e for e in _elements(store) if (e[1], e[2]) == (x, y)]
+                       ~~~~~~~~~^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 155, in _elements
+    out.append((gid, int(el.Index.X), int(el.Index.Y), int(el.Amount), float(el.DamageFactor), int(el.Type)))
+                                                                                               ~~~^^^^^^^^^
+ValueError: invalid literal for int() with base 10: b'\x01\x00\x00\x00'
+2026-09-29 20:10:46,085 S2                       INFO   [watch] RepairTechnology(group=24, slot=1,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:10:46,085 S2                       ERROR  after_repair logging failed
+Traceback (most recent call last):
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 244, in after_repair
+    f'real ship slot now: {_real_ship_slot(ps, x, y)}')
+                           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 211, in _real_ship_slot
+    return {label: _at(_store(ps_addr, off, primary), x, y) for label, off in SHIP_STORES.values()}
+                   ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 160, in _at
+    return [e for e in _elements(store) if (e[1], e[2]) == (x, y)]
+                       ~~~~~~~~~^^^^^^^
+  File "%USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2_repair_one.py", line 155, in _elements
+    out.append((gid, int(el.Index.X), int(el.Index.Y), int(el.Amount), float(el.DamageFactor), int(el.Type)))
+                                                                                               ~~~^^^^^^^^^
+ValueError: invalid literal for int() with base 10: b'\x00\x00\x00\x00'

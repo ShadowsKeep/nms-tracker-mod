@@ -1,0 +1,40 @@
+2026-09-29 21:02:44,330 root                     INFO   Loading pyMHF...
+2026-09-29 21:02:44,596 pymem                    DEBUG  Process 15092 is being debugged
+2026-09-29 21:02:47,112 root                     INFO   pyMHF injection complete!
+2026-09-29 21:02:47,112 root                     INFO   Loading mods
+2026-09-29 21:02:47,168 pymem                    DEBUG  Process 15092 is being debugged
+2026-09-29 21:02:47,318 root                     INFO   Loaded 3 mods and 6 hooks in 0.206s
+2026-09-29 21:02:47,323 pymhf.core.utils         WARNING Cannot find window handle for PID 15092
+2026-09-29 21:02:47,326 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 21:02:56,928 root                     INFO   New State: APPCORESERVICES
+2026-09-29 21:02:56,930 NMSTracker               INFO   Game build 179666: supported. Press F7 in a repair screen.
+2026-09-29 21:02:58,545 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 21:03:06,974 root                     INFO   New State: MODESELECTOR
+2026-09-29 21:03:14,319 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 21:03:31,764 root                     INFO   New State: APPVIEW
+2026-09-29 21:03:39,480 NMSTracker               INFO   open a damaged part's repair screen, then press F7
+2026-09-29 21:03:42,816 NMSTracker               INFO   open a damaged part's repair screen, then press F7
+2026-09-29 21:03:44,283 NMSTracker               INFO   open a damaged part's repair screen, then press F7
+2026-09-29 21:03:56,019 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:03:57,502 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:03:58,952 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:04:00,302 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:04:01,636 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:04:03,034 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:04:04,368 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:04:05,737 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:04:07,252 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:04:10,883 NMSTracker               INFO   Learned the game's cost setting for ['R0_BOLT', 'R1_BOLT']: full cost = True
+2026-09-29 21:05:18,198 NMSTracker               INFO   Backed up 2 save slot(s) to %USERPROFILE%\AppData\Local\ShadowskeepLLC\NMSTrackerMod\backups
+2026-09-29 21:05:18,240 NMSTracker               INFO   Report: %USERPROFILE%\Dev\Game-addons\nms-tracker-mod\mod\reports\repair-20260929-210518.json
+2026-09-29 21:05:18,241 NMSTracker               INFO   repaired 1 step(s), used 3 NANOTUBES - 1 step(s) still need materials
+2026-09-29 21:14:32,477 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:14:49,259 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:14:50,641 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:14:52,108 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:14:53,492 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:14:54,775 NMSTracker               INFO   repair one step of this part by hand first, then F7 does the rest
+2026-09-29 21:14:56,391 NMSTracker               INFO   Learned the game's cost setting for ['R0_TERRAI351568', 'R1_TERRAI351568']: full cost = True
+2026-09-29 21:14:57,210 NMSTracker               INFO   Report: %USERPROFILE%\Dev\Game-addons\nms-tracker-mod\mod\reports\repair-20260929-211457.json
+2026-09-29 21:14:57,210 NMSTracker               INFO   repaired 1 step(s), used 1 JELLY - part repaired
+2026-09-29 21:14:59,542 NMSTracker               INFO   nothing left to repair on this part

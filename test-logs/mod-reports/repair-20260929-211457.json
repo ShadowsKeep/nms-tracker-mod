@@ -1,0 +1,32 @@
+{
+  "made": "2026-09-29 21:14:57",
+  "game_build": 179666,
+  "part_steps": [
+    "R0_TERRAI351568",
+    "R1_TERRAI351568"
+  ],
+  "full_cost": true,
+  "repaired": [
+    "R1_TERRAI351568"
+  ],
+  "stopped": "done",
+  "materials": {
+    "JELLY": -1
+  },
+  "steps_now": [
+    [
+      "R0_TERRAI351568",
+      0,
+      0,
+      0.0
+    ],
+    [
+      "R1_TERRAI351568",
+      1,
+      0,
+      0.0
+    ]
+  ],
+  "ship_damage_before": [],
+  "ship_damage_after": []
+}

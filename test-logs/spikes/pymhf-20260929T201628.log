@@ -1,0 +1,32 @@
+2026-09-29 20:16:38,119 root                     INFO   Loading pyMHF...
+2026-09-29 20:16:39,411 pymem                    DEBUG  Process 26264 is being debugged
+2026-09-29 20:16:41,177 root                     INFO   pyMHF injection complete!
+2026-09-29 20:16:41,178 root                     INFO   Loading mods
+2026-09-29 20:16:41,215 pymem                    DEBUG  Process 26264 is being debugged
+2026-09-29 20:16:41,355 root                     INFO   Loaded 3 mods and 8 hooks in 0.177s
+2026-09-29 20:16:41,359 pymhf.core.utils         WARNING Cannot find window handle for PID 26264
+2026-09-29 20:16:41,526 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 20:16:52,447 root                     INFO   New State: APPCORESERVICES
+2026-09-29 20:16:54,170 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 20:17:04,161 root                     INFO   New State: MODESELECTOR
+2026-09-29 20:17:11,506 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 20:17:30,639 root                     INFO   New State: APPVIEW
+2026-09-29 20:17:45,516 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=0,0, fullCost=False) -> True this_is_player_state=True store=NOT a player store (0x24D07486050) item=[('R0_LAUNCHER', 0, 0, 0, 1.0, 1)]
+2026-09-29 20:17:45,516 S2                       INFO   [watch] RepairTechnology(group=24, slot=0,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:17:45,516 S2                       INFO   [watch] Normal paid repair seen. "Repair one more" is now enabled. Leave the other damaged part for the button.
+2026-09-29 20:17:45,519 S2                       INFO   [watch]   group 24 is NOT a player store (0x24D07486050); real ship slot now: {'general': [], 'tech': [('LAUNCHER', 0, 0, 0, 1.0, 1)], 'cargo': []}
+2026-09-29 20:17:49,132 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=1,0, fullCost=False) -> True this_is_player_state=True store=NOT a player store (0x24D07486050) item=[('R1_LAUNCHER', 1, 0, 0, 1.0, 1)]
+2026-09-29 20:17:49,132 S2                       INFO   [watch] RepairTechnology(group=24, slot=1,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:17:49,133 S2                       INFO   [watch] Normal paid repair seen. "Repair one more" is now enabled. Leave the other damaged part for the button.
+2026-09-29 20:17:49,133 S2                       INFO   [watch]   group 24 is NOT a player store (0x24D07486050); real ship slot now: {'general': [], 'tech': [('SHIPJUMP1', 1, 0, 0, 1.0, 1)], 'cargo': []}
+2026-09-29 20:17:55,006 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:17:55,037 S2                       INFO   No damaged technology left in group 24 (inventories[Unknown0x18]).
+2026-09-29 20:18:13,339 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:18:13,369 pymhf.core.hooking       ERROR  'GameRepair.CanRepairTechnology' has function signature [<class 'pymhf.core.LP_cGcPlayerState'>, <class 'pymhf.core.LP_cGcInventoryStore'>, <class 'ctypes.c_long'>, <class 'pymhf.core.LP_cGcInventoryIndex'>, <class 'ctypes.c_bool'>] but was called with [<cparam 'P' (0x0000024E32BAB950)>, <cparam 'P' (0x0000024D07486050)>, 24, <cparam 'P' (0x0000020C66C10E18)>, False]
+2026-09-29 20:18:13,369 pymhf.core.hooking       ERROR  There was an exception calling 'GameRepair.CanRepairTechnology'
+Traceback (most recent call last):
+  File "%USERPROFILE%\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\pymhf\core\hooking.py", line 993, in _call
+    val = cfunc(*_args)
+ctypes.ArgumentError: argument 1: TypeError: expected LP_cGcPlayerState instance instead of pointer to GameRepair
+2026-09-29 20:18:13,372 S2                       INFO     R0_SHIPJUMP1 at 0,0: game says can repair = False
+2026-09-29 20:18:13,372 S2                       INFO   None of the 1 damaged parts in group 24 (NOT a player store (0x24D07486050)) can be afforded according to the game; nothing done.

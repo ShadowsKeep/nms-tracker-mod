@@ -1,0 +1,18 @@
+{
+  "made": "2026-09-29 21:27:43",
+  "game_build": 179666,
+  "kind": "repair screen",
+  "part_steps": [
+    "R0_BOLT",
+    "R1_BOLT"
+  ],
+  "repaired": [
+    "R0_BOLT"
+  ],
+  "stopped": "done",
+  "materials": {
+    "STELLAR2": -100
+  },
+  "ship_damage_before": [],
+  "ship_damage_after": []
+}

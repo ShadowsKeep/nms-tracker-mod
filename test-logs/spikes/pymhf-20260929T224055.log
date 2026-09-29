@@ -1,0 +1,14 @@
+2026-09-29 22:40:55,186 root                     INFO   Loading pyMHF...
+2026-09-29 22:40:55,404 pymem                    DEBUG  Process 51356 is being debugged
+2026-09-29 22:40:57,240 root                     INFO   pyMHF injection complete!
+2026-09-29 22:40:57,240 root                     INFO   Loading mods
+2026-09-29 22:40:57,266 pymem                    DEBUG  Process 51356 is being debugged
+2026-09-29 22:40:57,414 root                     INFO   Loaded 3 mods and 6 hooks in 0.174s
+2026-09-29 22:40:57,418 pymhf.core.utils         WARNING Cannot find window handle for PID 51356
+2026-09-29 22:40:57,420 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 22:41:07,785 root                     INFO   New State: APPCORESERVICES
+2026-09-29 22:41:09,770 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 22:41:19,238 root                     INFO   New State: MODESELECTOR
+2026-09-29 22:41:36,363 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 22:41:54,791 root                     INFO   New State: APPVIEW
+2026-09-29 22:41:54,791 S3                       INFO   In game: each layout loaded from now on is recorded once

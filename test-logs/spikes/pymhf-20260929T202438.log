@@ -1,0 +1,58 @@
+2026-09-29 20:24:46,667 root                     INFO   Loading pyMHF...
+2026-09-29 20:24:47,970 pymem                    DEBUG  Process 50596 is being debugged
+2026-09-29 20:24:50,496 root                     INFO   pyMHF injection complete!
+2026-09-29 20:24:50,496 root                     INFO   Loading mods
+2026-09-29 20:24:50,536 pymem                    DEBUG  Process 50596 is being debugged
+2026-09-29 20:24:50,702 root                     INFO   Loaded 3 mods and 8 hooks in 0.206s
+2026-09-29 20:24:50,708 pymhf.core.utils         WARNING Cannot find window handle for PID 50596
+2026-09-29 20:24:50,976 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 20:24:56,988 root                     INFO   New State: APPCORESERVICES
+2026-09-29 20:24:58,737 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 20:25:10,027 root                     INFO   New State: MODESELECTOR
+2026-09-29 20:25:16,083 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 20:25:35,369 root                     INFO   New State: APPVIEW
+2026-09-29 20:25:44,838 S2                       WARNING Not yet: first repair one damaged slot yourself in the normal inventory menu.
+2026-09-29 20:25:53,642 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=0,0, fullCost=False) -> True this_is_player_state=True store=NOT a player store (0x2197702C050) item=[('R0_LAUNCHER', 0, 0, 0, 1.0, 1)]
+2026-09-29 20:25:53,642 S2                       INFO   [watch] RepairTechnology(group=24, slot=0,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:25:53,642 S2                       INFO   [watch] Normal paid repair seen. "Repair one more" is now enabled. Leave the other damaged part for the button.
+2026-09-29 20:25:53,645 S2                       INFO   [watch]   group 24 is NOT a player store (0x2197702C050), now holding [('R0_LAUNCHER', 0, 0, 0.0), ('R1_LAUNCHER', 1, 0, 1.0)]
+2026-09-29 20:25:53,645 S2                       INFO   [watch]   ship damage now: [('tech', 'LAUNCHER', 0, 0, 1.0), ('tech', 'SHIPJUMP1', 1, 0, 1.0)]
+2026-09-29 20:25:54,898 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=1,0, fullCost=False) -> True this_is_player_state=True store=NOT a player store (0x2197702C050) item=[('R1_LAUNCHER', 1, 0, 0, 1.0, 1)]
+2026-09-29 20:25:54,898 S2                       INFO   [watch] RepairTechnology(group=24, slot=1,0, free=False, fullCost=False, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:25:54,898 S2                       INFO   [watch] Normal paid repair seen. "Repair one more" is now enabled. Leave the other damaged part for the button.
+2026-09-29 20:25:54,898 S2                       INFO   [watch]   group 24 is NOT a player store (0x2197702C050), now holding [('R0_LAUNCHER', 0, 0, 0.0), ('R1_LAUNCHER', 1, 0, 0.0)]
+2026-09-29 20:25:54,898 S2                       INFO   [watch]   ship damage now: [('tech', 'LAUNCHER', 0, 0, 1.0), ('tech', 'SHIPJUMP1', 1, 0, 1.0)]
+2026-09-29 20:26:01,487 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:26:01,520 S2                       ERROR  No repair screen is open. In the game, select the damaged part so its repair steps are showing, then press the button again.
+2026-09-29 20:26:12,221 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:26:12,251 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=0,0, fullCost=False) -> False this_is_player_state=True store=NOT a player store (0x2197702C050) item=[('R0_SHIPJUMP1', 0, 0, 0, 1.0, 1)]
+2026-09-29 20:26:12,251 S2                       INFO     R0_SHIPJUMP1 at 0,0: game says can repair = False
+2026-09-29 20:26:12,251 S2                       INFO   None of the 1 damaged parts in group 24 (NOT a player store (0x2197702C050)) can be afforded according to the game; nothing done.
+2026-09-29 20:26:13,921 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:26:13,951 S2                       INFO     R0_SHIPJUMP1 at 0,0: game says can repair = False
+2026-09-29 20:26:13,951 S2                       INFO   None of the 1 damaged parts in group 24 (NOT a player store (0x2197702C050)) can be afforded according to the game; nothing done.
+2026-09-29 20:29:38,994 pymhf.core.mod_loader    INFO   Removing hook <bound method S2RepairOne.after_broken_slot of <s2_repair_one.S2RepairOne object at 0x000001D899201BE0>>: GameRepair.RepairBrokenSlot
+2026-09-29 20:29:39,049 pymhf.core.mod_loader    INFO   Removing hook <bound method S2RepairOne.after_can_repair of <s2_repair_one.S2RepairOne object at 0x000001D899201BE0>>: GameRepair.CanRepairTechnology
+2026-09-29 20:29:39,104 pymhf.core.mod_loader    INFO   Removing hook <bound method S2RepairOne.after_repair of <s2_repair_one.S2RepairOne object at 0x000001D899201BE0>>: GameRepair.RepairTechnology
+2026-09-29 20:29:39,218 pymhf.core.mod_loader    INFO   Finished reloading S2RepairOne
+2026-09-29 20:32:28,217 S2                       WARNING Not yet: first repair one damaged slot yourself in the normal inventory menu.
+2026-09-29 20:33:26,619 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=0,0, fullCost=True) -> False this_is_player_state=True store=NOT a player store (0x2197702C050) item=[('R0_SCANBINOC1', 0, 0, 0, 1.0, 1)]
+2026-09-29 20:34:36,361 S2                       INFO   [watch] CanRepairTechnology(group=24, slot=0,0, fullCost=True) -> True this_is_player_state=True store=NOT a player store (0x2197702C050) item=[('R0_SCANBINOC1', 0, 0, 0, 1.0, 1)]
+2026-09-29 20:34:36,362 S2                       INFO   [watch] RepairTechnology(group=24, slot=0,0, free=False, fullCost=True, repairKit=False) -> True this_is_player_state=True
+2026-09-29 20:34:36,362 S2                       INFO   [watch] Normal paid repair seen. "Repair one more" is now enabled. Leave the other damaged part for the button.
+2026-09-29 20:34:36,362 S2                       INFO   [watch]   group 24 is NOT a player store (0x2197702C050), now holding [('R0_SCANBINOC1', 0, 0, 0.0)]
+2026-09-29 20:34:36,362 S2                       INFO   [watch]   ship damage now: [('tech', 'SHIPJUMP1', 1, 0, 1.0)]
+2026-09-29 20:36:40,910 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:36:40,914 S2                       ERROR  No repair screen is open. In the game, select the damaged part so its repair steps are showing, then press the button again.
+2026-09-29 20:36:42,577 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:36:42,581 S2                       ERROR  No repair screen is open. In the game, select the damaged part so its repair steps are showing, then press the button again.
+2026-09-29 20:36:42,843 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:36:42,848 S2                       ERROR  No repair screen is open. In the game, select the damaged part so its repair steps are showing, then press the button again.
+2026-09-29 20:36:51,777 S2                       INFO   Repair requested; it runs on the next game frame.
+2026-09-29 20:36:51,788 S2                       INFO     R0_SHIPJUMP1 at 0,0: game says can repair = True
+2026-09-29 20:36:51,788 S2                       INFO   Target R0_SHIPJUMP1 at 0,0 in group 24 (NOT a player store (0x2197702C050)).
+2026-09-29 20:36:51,814 S2                       INFO   Backed up 2 save slot(s).
+2026-09-29 20:36:51,814 S2                       INFO   [watch] RepairTechnology(group=24, slot=0,0, free=False, fullCost=True, repairKit=False) -> True this_is_player_state=True (our call)
+2026-09-29 20:36:51,815 S2                       INFO   [watch]   group 24 is NOT a player store (0x2197702C050), now holding [('R0_SHIPJUMP1', 0, 0, 0.0), ('R1_SHIPJUMP1', 1, 0, 0.0)]
+2026-09-29 20:36:51,815 S2                       INFO   [watch]   ship damage now: [('tech', 'SHIPJUMP1', 1, 0, 1.0)]
+2026-09-29 20:36:51,816 S2                       INFO   RepairTechnology returned True. Materials change: {'CARBON_SEAL': -1}. Repair steps now: [('R0_SHIPJUMP1', 0, 0, 0.0), ('R1_SHIPJUMP1', 1, 0, 0.0)]. Ship damage now: [('tech', 'SHIPJUMP1', 1, 0, 1.0)]. Report: %USERPROFILE%\Dev\Game-addons\nms-tracker-mod\spikes\s2-20260929-203651.json
