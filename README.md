@@ -16,8 +16,8 @@ normal material cost.
 | Repairs through the game's own `RepairTechnology` (pays, persists in the save) | Working, verified by save diffs |
 | **F7**: repair every affordable step of the open repair screen, or every affordable damaged part of the ship | Working in game |
 | Messages through the game's own on-screen notifications, item names in the game's language | Working in game |
-| **REPAIRS tab** in the inventory tab row (click and Q/E / A/D select it) | Working in game as spikes `s3b` / `s3c` |
-| Repair summary inside the REPAIRS tab | Next |
+| **REPAIRS tab** in the inventory tab row (click and Q/E / A/D select it) | Working in game as spikes `s3b` / `s3c`; built into the mod (v0.4), not yet run in game there |
+| Repair summary when REPAIRS is selected | v0.4: as an in-game message; in the page's own right-hand panel next |
 
 No extra windows: pyMHF's GUI and log console are turned off; everything happens in the game.
 
@@ -59,9 +59,10 @@ first, and keep the backups.
 ## Layout
 
 ```
-mod/nmstracker_mod.py  the NMS.py mod: F7, cost-rule check, backups, reports, in-game messages
+mod/nmstracker_mod.py  the NMS.py mod: REPAIRS tab hooks, F7, cost-rule check, backups, reports, messages
+mod/tab.py             the REPAIRS tab (drawing, click and Q/E selection), from spike S3c
 mod/game.py            game function declarations, memory readers, repair loop, costs, names
-mod/core.py            repair planning across parts, pure Python, no game imports
+mod/core.py            repair planning across parts and the tab's summary panel, pure Python
 mod/backup.py          save-slot backup before repairs (read-only on the game's files)
 spikes/                step-by-step experiments (S1 read, S2 repair, S3 UI / tab) and their notes
 tests/                 python -m unittest discover -s tests (offline; fake game memory in ctypes)

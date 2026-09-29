@@ -47,7 +47,7 @@ from pymhf.gui.decorators import no_gui
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
-from mod import backup, game  # noqa: E402
+from mod import backup, core, game, tab  # noqa: E402
 
 from nmspy.common import gameData  # noqa: E402
 from nmspy.decorators import main_loop  # noqa: E402
@@ -70,8 +70,8 @@ def plural(n: int, word: str) -> str:
 @no_gui
 class NMSTrackerMod(Mod):
     __author__ = 'Shadowskeep LLC'
-    __description__ = 'F7 repairs the open repair screen, or your whole ship'
-    __version__ = '0.3.2'
+    __description__ = 'REPAIRS inventory tab; F7 repairs the open repair screen, or your whole ship'
+    __version__ = '0.4.0'
 
     def __init__(self):
         super().__init__()
@@ -83,6 +83,8 @@ class NMSTrackerMod(Mod):
         self._rule_broken = False       # set if the game ever uses a cost flag our rule didn't predict
         self._names = game.Names()      # item names in the player's language, loaded on first use
         self._requirements = None       # tech id -> repair requirements, from the game's own table
+        self.tab = tab.RepairsTab(logger, self._tab_changed)
+        self.tab.set_enabled(False)     # switched on once the game build is known to be supported
 
     # Every time the game's own menu asks "can this be afforded?", check that our cost rule
     # (full cost = not FullyInstalled) gives the same flag. If it ever differs, F7 stops.
@@ -100,6 +102,59 @@ class NMSTrackerMod(Mod):
         except Exception:
             logger.exception('Could not check the cost setting the game used')
 
+    # ── the REPAIRS tab: thin hooks, all logic in mod/tab.py ─────────────────
+    @tab.GameTabs.PrevNextPage.before
+    def _tab_prev_next_before(self, this, lbNext):
+        self.tab.before_prev_next(this, lbNext)
+
+    @tab.GameTabs.PrevNextPage.after
+    def _tab_prev_next_after(self, this, lbNext):
+        self.tab.after_prev_next(this, lbNext)
+
+    @tab.GameTabs.OpenPage.before
+    def _tab_open_before(self, this, liPage, lbFlag):
+        return self.tab.before_open(this, liPage, lbFlag)     # a tuple here swaps the page the game opens
+
+    @tab.GameTabs.OpenPage.after
+    def _tab_open_after(self, this, liPage, lbFlag, _result_):
+        self.tab.after_open(this, liPage, lbFlag, _result_)
+
+    @tab.GameTabs.DrawPageSelectBar.before
+    def _tab_draw_before(self, this, lpBarTop, lpTabList, lbShow):
+        self.tab.before_draw(this, lpBarTop, lpTabList, lbShow)
+
+    @tab.GameTabs.DrawPageSelectBar.after
+    def _tab_draw_after(self, this, lpBarTop, lpTabList, lbShow):
+        self.tab.after_draw(this, lpBarTop, lpTabList, lbShow)
+
+    def _tab_changed(self, active: bool, why: str):
+        """REPAIRS selected: show the ship's repair summary (runs on the game thread)."""
+        if not active:
+            return
+        try:
+            ps = gameData.player_state
+            if ps is None:
+                return
+            self._load_game_data()
+            self._say(self._summary_text(ps))
+        except Exception:
+            logger.exception('Could not show the repair summary')
+
+    def _summary_text(self, ps) -> str:
+        targets, needs_screen = game.ship_repair_targets(ps)
+        plan = game.ship_plan(ps, self._requirements or {}, game.repair_factor())
+        panel = core.repair_panel(plan, len(needs_screen), self._names.name)
+        if panel.subtitle == 'No damage':
+            return 'Ship Repairs - no damage, nothing to repair'
+        now, waiting, screen = (int(r.value) for r in panel.rows[:3])
+        parts = [panel.subtitle, f'{now} can be repaired now (F7)']
+        if waiting:
+            parts.append(f'{waiting} ' + ('needs' if waiting == 1 else 'need') + ' materials')
+        if screen:
+            parts.append(f'{screen} ' + ('needs its' if screen == 1 else 'need their') + ' repair screen')
+        short = game.shortfall_text(plan, self._names.name, limit=2)
+        return 'Ship Repairs - ' + ', '.join(parts) + (f' - short of {short}' if short else '')
+
     @on_key_pressed(REPAIR_KEY)
     def repair_key(self):
         self._pending = True            # runs on the next game frame, on the game's own thread
@@ -111,10 +166,11 @@ class NMSTrackerMod(Mod):
             build = game.running_build()
             self._enabled = build == str(game.GAME_BUILD)
             if self._enabled:
-                logger.info(f'Game build {build}: supported. F7 repairs.')
+                logger.info(f'Game build {build}: supported. F7 repairs; REPAIRS tab on.')
             else:
                 logger.error(f'Game build {build or "unknown"} is not {game.GAME_BUILD}; the mod stays off '
                              'until it is updated for this build.')
+            self.tab.set_enabled(self._enabled)
         if not self._pending:
             return
         self._pending = False

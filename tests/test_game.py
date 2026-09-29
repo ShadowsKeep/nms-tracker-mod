@@ -494,11 +494,37 @@ class ModEntryTest(unittest.TestCase):
     def test_mod_loads_with_hook_key_and_frame_callback_and_no_window(self):
         m = self.load()
         mod = m.NMSTrackerMod()
-        self.assertEqual(sorted(h._hook_func_name for h in mod.hooks), ['GameRepair.CanRepairTechnology'])
+        self.assertEqual(sorted((h._hook_func_name, h._hook_time.name) for h in mod.hooks), [
+            ('GameRepair.CanRepairTechnology', 'AFTER'),
+            ('GameTabs.DrawPageSelectBar', 'AFTER'), ('GameTabs.DrawPageSelectBar', 'BEFORE'),
+            ('GameTabs.OpenPage', 'AFTER'), ('GameTabs.OpenPage', 'BEFORE'),
+            ('GameTabs.PrevNextPage', 'AFTER'), ('GameTabs.PrevNextPage', 'BEFORE'),
+        ])
+        self.assertFalse(mod.tab.enabled)            # off until the game build is checked
         self.assertEqual([f._hotkey for f in mod._hotkey_funcs], ['f7'])
         self.assertEqual(len(mod._gui_widgets), 0)
         self.assertTrue(getattr(m.NMSTrackerMod, '_no_gui', False))
         self.assertEqual(len(mod._custom_callbacks), 1)
+
+    def test_summary_text(self):
+        m = self.load()
+        mod = m.NMSTrackerMod()
+        p = FakePlayer(
+            general=[('SHIPSLOT_DMG4', 5, 1, 0, 1.0, 1, True), ('SHIPSLOT_DMG9', 4, 4, 0, 1.0, 1, True),
+                     ('LUSH1', 0, 0, 200, 0.0, 0)],
+            tech=[('SHIPROCKETS', 2, 1, 0, 1.0, 1, False)],
+            personal=[('EX_YELLOW', 0, 0, 100, 0.0, 0), ('ROBOT1', 1, 0, 5, 0.0, 2)],
+        )
+        mod._requirements = {'SHIPSLOT_DMG4': (('LUSH1', 300), ('ROBOT1', 20)), 'SHIPSLOT_DMG9': (('EX_YELLOW', 150),)}
+        mod._names._keys = {}
+        orig = game.repair_factor
+        try:
+            game.repair_factor = lambda: 0.5
+            text = mod._summary_text(p.ps)
+        finally:
+            game.repair_factor = orig
+        self.assertEqual(text, 'Ship Repairs - 3 damaged parts, 1 can be repaired now (F7), 1 needs materials, '
+                               '1 needs its repair screen - short of 5 ROBOT1')
 
     def test_settings_hide_every_pymhf_window(self):
         from pymhf.utils.parse_toml import read_pymhf_settings

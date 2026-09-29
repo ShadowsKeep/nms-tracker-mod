@@ -56,6 +56,55 @@ class RepairPlan:
         return text
 
 
+@dataclass
+class PanelRow:
+    label: str
+    value: str
+    fill: float                 # 0..100, the bar under the row
+
+
+@dataclass
+class Panel:
+    """What the REPAIRS tab shows in the game's right-hand panel (title, one line, five rows)."""
+    title: str
+    subtitle: str
+    rows: list
+
+
+def repair_panel(plan: 'RepairPlan', needs_screen: int, name=lambda gid: gid, max_rows: int = 5) -> Panel:
+    """Turn a ship repair plan into the panel text.
+
+    Rows: parts you can repair now, parts waiting on materials, parts that need their own repair
+    screen, then the materials you are shortest of. Bars show each count's share of all damage,
+    or for a material how much of it you already have.
+    """
+    waiting = sum(1 for p in plan.slots if p.order is None)
+    total = plan.total + needs_screen
+    if total == 0:
+        return Panel('Ship Repairs', 'No damage', [PanelRow('All parts working', '0', 100.0)])
+
+    def share(n):
+        return round(100.0 * n / total, 1)
+
+    rows = [
+        PanelRow('Repair now (F7)', str(len(plan.batch)), share(len(plan.batch))),
+        PanelRow('Need materials', str(waiting), share(waiting)),
+        PanelRow('Need repair screen', str(needs_screen), share(needs_screen)),
+    ]
+    need_all = {}
+    for p in plan.slots:
+        for m, q in merge_cost(p.slot.cost).items():
+            need_all[m] = need_all.get(m, 0) + q
+    for gid, missing in sorted(plan.missing_for_all.items(), key=lambda kv: -kv[1]):
+        if len(rows) >= max_rows:
+            break
+        needed = need_all.get(gid, missing)
+        have = max(0, needed - missing)
+        rows.append(PanelRow(f'Short: {name(gid)}', str(missing), round(100.0 * have / needed, 1) if needed else 0.0))
+    subtitle = f'{total} damaged part' + ('' if total == 1 else 's')
+    return Panel('Ship Repairs', subtitle, rows[:max_rows])
+
+
 def merge_cost(cost) -> dict:
     """((id, qty), ...) -> {id: qty}, adding up repeats and dropping zero or negative amounts."""
     out = {}

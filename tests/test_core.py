@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from mod.core import Slot, merge_cost, plan_repairs  # noqa: E402
+from mod.core import Slot, merge_cost, plan_repairs, repair_panel  # noqa: E402
 
 
 def slot(key, *cost, name=None):
@@ -87,6 +87,32 @@ class PlanRepairsTest(unittest.TestCase):
         plan = plan_repairs([slot(1, ('WIRE', 1))], {'WIRE': -4})
         self.assertEqual(plan.batch, [])
         self.assertEqual(plan.slots[0].short_by, {'WIRE': 1})
+
+
+class RepairPanelTest(unittest.TestCase):
+    def test_no_damage(self):
+        panel = repair_panel(plan_repairs([], {}), needs_screen=0)
+        self.assertEqual((panel.title, panel.subtitle), ('Ship Repairs', 'No damage'))
+
+    def test_rows_and_bars(self):
+        slots = [slot(1, ('WIRE', 1)), slot(2, ('SEAL', 3)), slot(3, ('SEAL', 2), ('CARBON', 50))]
+        plan = plan_repairs(slots, {'WIRE': 1, 'SEAL': 1, 'CARBON': 10})
+        panel = repair_panel(plan, needs_screen=1, name={'SEAL': 'Hermetic Seal', 'CARBON': 'Carbon'}.get)
+        self.assertEqual(panel.subtitle, '4 damaged parts')
+        self.assertEqual([(r.label, r.value) for r in panel.rows], [
+            ('Repair now (F7)', '1'),
+            ('Need materials', '2'),
+            ('Need repair screen', '1'),
+            ('Short: Carbon', '40'),            # needs 50, has 10
+            ('Short: Hermetic Seal', '4'),      # needs 5, has 1
+        ])
+        self.assertEqual([r.fill for r in panel.rows], [25.0, 50.0, 25.0, 20.0, 20.0])
+
+    def test_one_part_is_singular_and_rows_are_capped(self):
+        plan = plan_repairs([slot(1, *[(f'M{i}', 1) for i in range(6)])], {})
+        panel = repair_panel(plan, needs_screen=0, name=lambda g: g)
+        self.assertEqual(panel.subtitle, '1 damaged part')
+        self.assertEqual(len(panel.rows), 5)
 
 
 class MergeCostTest(unittest.TestCase):

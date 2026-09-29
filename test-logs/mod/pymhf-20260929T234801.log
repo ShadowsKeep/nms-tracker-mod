@@ -1,0 +1,32 @@
+2026-09-29 23:48:01,216 root                     INFO   Loading pyMHF...
+2026-09-29 23:48:01,479 pymem                    DEBUG  Process 49232 is being debugged
+2026-09-29 23:48:03,512 root                     INFO   pyMHF injection complete!
+2026-09-29 23:48:03,512 root                     INFO   Loading mods
+2026-09-29 23:48:03,583 pymem                    DEBUG  Process 49232 is being debugged
+2026-09-29 23:48:03,955 root                     INFO   Loaded 3 mods and 9 hooks in 0.443s
+2026-09-29 23:48:03,959 pymhf.core.utils         WARNING Cannot find window handle for PID 49232
+2026-09-29 23:48:03,960 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-09-29 23:48:14,866 root                     INFO   New State: APPCORESERVICES
+2026-09-29 23:48:14,868 NMSTracker               INFO   Game build 179666: supported. F7 repairs; REPAIRS tab on.
+2026-09-29 23:48:16,506 root                     INFO   New State: APPGLOBALLOAD
+2026-09-29 23:48:24,638 root                     INFO   New State: MODESELECTOR
+2026-09-29 23:48:29,204 root                     INFO   New State: APPLOCALLOAD
+2026-09-29 23:48:47,355 root                     INFO   New State: APPVIEW
+2026-09-29 23:48:52,682 NMSTracker               INFO   REPAIRS tab drawn in slot 4 (after 3 game tabs)
+2026-09-29 23:48:54,554 NMSTracker               INFO   REPAIRS selected (page 1 opened)
+2026-09-29 23:48:54,564 NMSTracker               INFO   Loaded 2706 item names from the game
+2026-09-29 23:48:54,572 NMSTracker               INFO   Loaded repair costs for 393 technologies; repair factor 0.5
+2026-09-29 23:48:54,576 NMSTracker               INFO   Ship Repairs - no damage, nothing to repair
+2026-09-29 23:48:54,576 NMSTracker               INFO   REPAIRS clicked: asked the game for the Starship page
+2026-09-29 23:48:57,708 NMSTracker               INFO   REPAIRS left (page 0 opened)
+2026-09-29 23:48:58,693 NMSTracker               INFO   REPAIRS selected (page 1 opened)
+2026-09-29 23:48:58,693 NMSTracker               INFO   Ship Repairs - no damage, nothing to repair
+2026-09-29 23:48:58,693 NMSTracker               INFO   REPAIRS clicked: asked the game for the Starship page
+2026-09-29 23:49:06,916 NMSTracker               INFO   your ship has nothing to repair
+2026-09-29 23:49:12,023 NMSTracker               INFO   REPAIRS left (page 0 opened)
+2026-09-29 23:49:12,873 NMSTracker               INFO   REPAIRS selected (page 0 opened)
+2026-09-29 23:49:12,874 NMSTracker               INFO   Ship Repairs - no damage, nothing to repair
+2026-09-29 23:49:14,559 NMSTracker               INFO   REPAIRS left (page 0 opened)
+2026-09-29 23:49:16,059 NMSTracker               INFO   REPAIRS selected (page 0 opened)
+2026-09-29 23:49:16,060 NMSTracker               INFO   Ship Repairs - no damage, nothing to repair
+2026-09-29 23:49:24,563 NMSTracker               INFO   REPAIRS left (page 7 opened)
