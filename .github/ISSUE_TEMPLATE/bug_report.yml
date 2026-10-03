@@ -1,0 +1,46 @@
+name: Bug report
+description: Something in the mod didn't work, or did something unexpected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please **don't attach save files** here (they are personal). The mod
+        backs your saves up to `%LOCALAPPDATA%\ShadowskeepLLC\NMSTrackerMod\backups\` before it
+        changes anything.
+  - type: input
+    id: game_build
+    attributes:
+      label: Game build
+      description: The mod's log says it on start-up ("Game build ...") - or right-click NMS.exe > Properties > Details > File version.
+      placeholder: "180383"
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: NMS.py and pyMHF versions
+      description: "`python -m pip show nmspy pymhf`"
+      placeholder: "nmspy 180383.0, pymhf 0.2.4"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did (which screen, which key), what you expected, and what you saw. A screenshot of the REPAIRS tab helps a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: The newest file in `mod/logs/`. Replace your Windows user name in the paths (e.g. with %USERPROFILE%) before pasting.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I ran the mod with `pymhf run nmstracker_mod.py` from the `mod` folder, with the game closed.
+        - label: I removed personal details (user name, Steam ID) from what I pasted.

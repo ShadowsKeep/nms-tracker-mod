@@ -561,7 +561,7 @@ class RepairLoopTest(unittest.TestCase):
 
 @unittest.skipUnless(HAVE_NMSPY, 'NMS.py not installed')
 class BuildTest(unittest.TestCase):
-    EXE = r"E:\SteamLibrary\steamapps\common\No Man's Sky\Binaries\NMS.exe"
+    EXE = os.environ.get('NMS_EXE', r"E:\SteamLibrary\steamapps\common\No Man's Sky\Binaries\NMS.exe")
 
     @unittest.skipUnless(os.path.exists(EXE), 'game not installed here')
     def test_reads_the_installed_game_build(self):

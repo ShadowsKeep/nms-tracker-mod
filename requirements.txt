@@ -1,0 +1,2 @@
+# NMS.py is made for one game build; keep it matching game.GAME_BUILD in mod/game.py.
+nmspy==180383.0

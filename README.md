@@ -1,5 +1,8 @@
 # NMS Tracker Mod
 
+[![tests](https://github.com/ShadowsKeep/nms-tracker-mod/actions/workflows/tests.yml/badge.svg)](https://github.com/ShadowsKeep/nms-tracker-mod/actions/workflows/tests.yml)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 An in-game No Man's Sky mod (built on [NMS.py](https://github.com/monkeyman192/NMS.py) /
 [pyMHF](https://github.com/monkeyman192/pyMHF)): a **REPAIRS** tab in the inventory, styled
 like the game's own tabs, that shows the current ship's damaged parts and repairs them at the
@@ -26,7 +29,7 @@ No extra windows: pyMHF's GUI and log console are turned off; everything happens
 ## Try it (cmd or PowerShell, game closed)
 
 ```
-python -m pip install nmspy
+python -m pip install -r requirements.txt
 cd nms-tracker-mod\mod
 pymhf run nmstracker_mod.py
 ```
@@ -117,11 +120,24 @@ names are descriptive; the game's own names aren't known here:
 
 More in [`spikes/README.md`](spikes/README.md).
 
+## Contributing
+
+Bug reports, testing on other saves and game builds, and code are welcome: see
+[CONTRIBUTING.md](CONTRIBUTING.md) (setup, tests, the mod's safety rules, updating for a new game
+build) and the [code of conduct](CODE_OF_CONDUCT.md). Questions and ideas go to
+[Discussions](https://github.com/ShadowsKeep/nms-tracker-mod/discussions).
+
+## Licence
+
+[MIT](LICENSE), the same as NMS.py and pyMHF, so the game function declarations in
+`mod/nms_ext.py` can move into NMS.py freely. No Man's Sky and its data belong to Hello Games; this
+repo contains no game files.
+
 ## Requirements (for players, once released)
 
 - No Man's Sky on PC (Steam; GOG to be confirmed) on a build the mod and NMS.py support
 - Python from python.org (not the Microsoft Store build)
-- `python -m pip install nmspy`
+- `python -m pip install -r requirements.txt` (NMS.py for the game build the mod supports)
 
 Free companion app: [NMS Tracker](https://github.com/ShadowsKeep/nms-tracker/releases/latest).
 Support: https://buymeacoffee.com/fxshadowking

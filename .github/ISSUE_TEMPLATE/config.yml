@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/ShadowsKeep/nms-tracker-mod/discussions
+    about: Ask how something works, or talk an idea through before opening an issue.
+  - name: NMS.py
+    url: https://github.com/monkeyman192/NMS.py
+    about: Problems with NMS.py or pyMHF themselves belong there.

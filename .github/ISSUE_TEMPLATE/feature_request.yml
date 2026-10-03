@@ -1,0 +1,16 @@
+name: Feature idea
+description: Something the REPAIRS tab or the mod could do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What would you like the mod to do, and when would you use it? A sketch on a screenshot works well.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Game screens it touches, other mods that do something similar, game functions you know of.

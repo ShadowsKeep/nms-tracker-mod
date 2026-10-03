@@ -1,0 +1,24 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # pyMHF and NMS.py are Windows-only; the tests fake game memory, so no game is needed.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install NMS.py (pinned to the game build the mod targets)
+        run: python -m pip install -r requirements.txt
+      - name: Offline tests
+        env:
+          PYTEST_VERSION: "1"     # pyMHF asks questions on import outside a real console otherwise
+        run: python -m unittest discover -s tests -v
