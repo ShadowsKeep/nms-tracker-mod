@@ -12,8 +12,8 @@ jobs:
     # pyMHF and NMS.py are Windows-only; the tests fake game memory, so no game is needed.
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install NMS.py (pinned to the game build the mod targets)
