@@ -8,16 +8,19 @@ An in-game No Man's Sky mod (built on [NMS.py](https://github.com/monkeyman192/N
 like the game's own tabs, that shows the current ship's damaged parts and repairs them at the
 normal material cost.
 
-> **Work in progress, game build 180383 with NMS.py 180383.0.** Game functions are found by byte
-> pattern; the few data offsets NMS.py doesn't give can move with each game update, so the mod
-> checks the build and switches itself off on any other. Not released yet.
+> **Early release (v0.7.0) for game build 180383 with NMS.py 180383.0.**
+> **Download: [NMSTrackerMod.zip](https://github.com/ShadowsKeep/nms-tracker-mod/releases/latest/download/NMSTrackerMod.zip)**
+> ([release notes](https://github.com/ShadowsKeep/nms-tracker-mod/releases/latest)). Game functions
+> are found by byte pattern; the few data offsets NMS.py doesn't give can move with each game
+> update, so the mod checks the build and switches itself off on any other.
 
-## Status (2026-09-29)
+## Status (2026-10-04)
 
 | Piece | State |
 |---|---|
 | Repairs through the game's own `RepairTechnology` (pays, persists in the save) | Working, verified by save diffs |
-| **F7**: repair every affordable step of the open repair screen, or every affordable damaged part of the ship | Working in game |
+| **F7 in a repair screen**: repair every step of that part you can afford | Working in game (save diffs: parts installed, charged, repair records cleared) |
+| **F7 anywhere else**: repair every affordable damaged part of the ship | Runs in game; so far only on ships where nothing was affordable in place, so a real whole-ship repair is still to be seen |
 | Messages through the game's own on-screen notifications, item names in the game's language | Working in game |
 | **REPAIRS tab** in the inventory tab row (click and Q/E / A/D select it) | Working in game (spikes `s3b` / `s3c`, mod v0.4) |
 | **REPAIRS screen**: the page's own right-hand panel shows the repair summary | Working in game (v0.5.1) |
@@ -28,8 +31,9 @@ No extra windows: pyMHF's GUI and log console are turned off; everything happens
 
 ## Install (players)
 
-The download is one folder, `NMSTrackerMod`, with a player guide inside (`README.txt`). With the
-game closed, from cmd or PowerShell:
+Download [NMSTrackerMod.zip](https://github.com/ShadowsKeep/nms-tracker-mod/releases/latest/download/NMSTrackerMod.zip)
+and unzip it anywhere: it is one folder, `NMSTrackerMod`, with a player guide inside
+(`README.txt`). With the game closed, from cmd or PowerShell:
 
 ```
 python -m pip install nmspy==180383.0
