@@ -47,8 +47,9 @@ from pymhf.gui.decorators import no_gui
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
-from mod import backup, core, display, game, grids, screen, tab  # noqa: E402
+from mod import backup, core, display, game, grids, nms_ext, screen, tab  # noqa: E402
 
+import nmspy.data.types as nms  # noqa: E402
 from nmspy.common import gameData  # noqa: E402
 from nmspy.decorators import main_loop  # noqa: E402
 
@@ -67,11 +68,17 @@ def plural(n: int, word: str) -> str:
     return f'{n} {word}' + ('' if n == 1 else 's')
 
 
+def with_this(this, args):
+    """Replacement arguments from the logic (which works on addresses) with the game's own
+    `this` put back in front, as the hook received it; None stays None (nothing replaced)."""
+    return None if args is None else (this,) + tuple(args[1:])
+
+
 @no_gui
 class NMSTrackerMod(Mod):
     __author__ = 'Shadowskeep LLC'
     __description__ = 'REPAIRS inventory tab; F7 repairs the open repair screen, or your whole ship'
-    __version__ = '0.6.0'
+    __version__ = '0.7.0'
 
     def __init__(self):
         super().__init__()
@@ -96,7 +103,7 @@ class NMSTrackerMod(Mod):
 
     # Every time the game's own menu asks "can this be afforded?", check that our cost rule
     # (full cost = not FullyInstalled) gives the same flag. If it ever differs, F7 stops.
-    @game.GameRepair.CanRepairTechnology.after
+    @nms_ext.cGcPlayerState.CanRepairTechnology.after
     def check_cost_rule(self, this, lpStore, liGroup, lIndex, lbFullCost, _result_):
         if self._busy or self._rule_broken or not lpStore:
             return
@@ -111,37 +118,46 @@ class NMSTrackerMod(Mod):
             logger.exception('Could not check the cost setting the game used')
 
     # ── the REPAIRS tab: thin hooks, all logic in mod/tab.py ─────────────────
-    @tab.GameTabs.PrevNextPage.before
+    # `this` arrives as a pointer to its class (NMS.py style); the logic works on addresses.
+    @nms_ext.cGcFrontendManager.PrevNextPage.before
     def _tab_prev_next_before(self, this, lbNext):
-        self.tab.before_prev_next(this, lbNext)
+        self.tab.before_prev_next(get_addressof(this), lbNext)
 
-    @tab.GameTabs.PrevNextPage.after
+    @nms_ext.cGcFrontendManager.PrevNextPage.after
     def _tab_prev_next_after(self, this, lbNext):
-        self.tab.after_prev_next(this, lbNext)
+        self.tab.after_prev_next(get_addressof(this), lbNext)
 
-    @tab.GameTabs.OpenPage.before
-    def _tab_open_before(self, this, liPage, lbFlag):
-        return self.tab.before_open(this, liPage, lbFlag)     # a tuple here swaps the page the game opens
+    @nms.cGcFrontendManager.Activate.before
+    def _tab_open_before(self, this, lePage, lbTransitionRight):
+        # a tuple here swaps the page the game opens; the game gets its own `this` back
+        return with_this(this, self.tab.before_open(get_addressof(this), lePage, lbTransitionRight))
 
-    @tab.GameTabs.OpenPage.after
-    def _tab_open_after(self, this, liPage, lbFlag, _result_):
-        self.tab.after_open(this, liPage, lbFlag, _result_)
+    @nms.cGcFrontendManager.Activate.after
+    def _tab_open_after(self, this, lePage, lbTransitionRight, _result_):
+        self.tab.after_open(get_addressof(this), lePage, lbTransitionRight, _result_)
         self.screen.forget()                    # a page open reloads the layout: old elements are gone
 
     # ── the REPAIRS grids: all logic in mod/grids.py ─────────────────────────
-    @grids.GameGrid.DoInventory.before
-    def _grid_before(self, this, lpStore, lpLayer, lbAccessible, lpSlotActions, lbViewOnly, lpOutFlag,
-                     liMask, liMinRows, liColumns, liSlotSize, lbNoScroll):
+    @nms_ext.cGcFrontendPageFunctions.DoInventory.before
+    def _grid_before(self, lpPage, lpInventory, lpInventoryGuiLayer, lbAccessible, lEmptySlotActions, lbViewOnly,
+                     lpbOut, liPopupActions, liMinRows, liSlotsWide, liSlotSize, lbNoScroll):
         # a tuple here draws a display store, locked, instead of the game's own grid
-        return self.grids.before_do_inventory(this, lpStore, lpLayer, lbAccessible, lpSlotActions, lbViewOnly,
-                                              lpOutFlag, liMask, liMinRows, liColumns, liSlotSize, lbNoScroll)
+        args = self.grids.before_do_inventory(
+            get_addressof(lpPage), get_addressof(lpInventory), get_addressof(lpInventoryGuiLayer), lbAccessible,
+            lEmptySlotActions, lbViewOnly, lpbOut, liPopupActions, liMinRows, liSlotsWide, liSlotSize, lbNoScroll)
+        if args is None:
+            return None
+        return (lpPage, grids.store_pointer(args[1]), lpInventoryGuiLayer) + tuple(args[3:])
 
-    @tab.GameTabs.DrawPageSelectBar.before
-    def _tab_draw_before(self, this, lpBarTop, lpTabList, lbShow):
-        self.tab.before_draw(this, lpBarTop, lpTabList, lbShow)
+    # the tab row: NMS.py's cGcFrontendPageFunctions.DoToolbar (static, page first)
+    @nms.cGcFrontendPageFunctions.DoToolbar.before
+    def _tab_draw_before(self, lpPage, lpParentLayer, lpPageGroup, lbActive):
+        self.tab.before_draw(get_addressof(lpPage), get_addressof(lpParentLayer), int(lpPageGroup or 0), lbActive)
 
-    @tab.GameTabs.DrawPageSelectBar.after
-    def _tab_draw_after(self, this, lpBarTop, lpTabList, lbShow):
+    @nms.cGcFrontendPageFunctions.DoToolbar.after
+    def _tab_draw_after(self, lpPage, lpParentLayer, lpPageGroup, lbActive):
+        this = get_addressof(lpPage)
+        lpBarTop, lpTabList, lbShow = get_addressof(lpParentLayer), int(lpPageGroup or 0), lbActive
         self.tab.after_draw(this, lpBarTop, lpTabList, lbShow)
         try:
             if self.tab.showing:
@@ -229,6 +245,13 @@ class NMSTrackerMod(Mod):
             build = game.running_build()
             self._enabled = build == str(game.GAME_BUILD)
             if self._enabled:
+                try:
+                    found = game.load_globals()
+                except Exception:
+                    logger.exception('Mapping the game globals with NMS.py failed')
+                    found = False
+                if not found:
+                    logger.warning('NMS.py did not find GcPlayerGlobals / GcUIGlobals: costs show as unknown, no messages')
                 logger.info(f'Game build {build}: supported. F7 repairs; REPAIRS tab on.')
             else:
                 logger.error(f'Game build {build or "unknown"} is not {game.GAME_BUILD}; the mod stays off '

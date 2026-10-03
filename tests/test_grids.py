@@ -15,7 +15,7 @@ try:
     from pymhf.core.functions import _get_funcdef
     from pymhf.core.hooking import FunctionHook
 
-    from mod import display, grids, screen, tab
+    from mod import display, grids, nms_ext, screen, tab
     HAVE_NMSPY = True
 except ImportError:                                # pragma: no cover - NMS.py not installed
     HAVE_NMSPY = False
@@ -65,12 +65,15 @@ class RepairGridsTest(unittest.TestCase):
         self.assertTrue(self.g.parts.ready)
 
     def test_arguments_convert_like_the_game_call(self):
-        fd = _get_funcdef(grids.GameGrid.DoInventory._func)
+        fd = _get_funcdef(nms_ext.cGcFrontendPageFunctions.DoInventory._func)
         args = self.call('SQU_INV_REGULAR')
+        # as the mod's hook hands them to the game: its own page / layer pointers, the store as a pointer
+        page, layer = (ctypes.cast(a, t) for a, t in ((self.page, fd.arg_types[0]), (args[2], fd.arg_types[2])))
+        args = (page, grids.store_pointer(args[1]), layer) + args[3:]
         self.assertEqual(len(fd.arg_types), len(args))
         for t, a in zip(fd.arg_types, args):
             t.from_param(a)
-        self.assertEqual(args[1], self.g.materials.address)
+        self.assertEqual(ctypes.cast(args[1], ctypes.c_void_p).value, self.g.materials.address)
         self.assertEqual(self.g.drawn, {'materials'})
 
     def test_left_alone(self):
@@ -135,7 +138,8 @@ class ConstructTest(unittest.TestCase):
             self.assertTrue(ds.build(grids.construct_with_game))
         finally:
             FunctionHook._call = saved
-        self.assertEqual([(name, list(args)) for name, args in calls], [('ConstructStore', [ds.address])])
+        self.assertEqual([(name, [ctypes.addressof(a._obj) for a in args]) for name, args in calls],
+                         [('cGcInventoryStore', [ds.address])])          # NMS.py's constructor, on the store
         self.assertTrue(ds.ready)
 
 

@@ -1,11 +1,14 @@
 """
-Everything that touches No Man's Sky's memory: game function declarations, store readers and
-the repair loop. Imported by the NMS.py mod (nmstracker_mod.py); tests import it offline with
+Reading the game's inventories and repair state, costs, item names, messages, and the repair
+loop. Imported by the NMS.py mod (nmstracker_mod.py); tests import it offline with
 PYTEST_VERSION=1 set (pyMHF prompts on import outside a real console otherwise).
 
+Game functions come from NMS.py where it declares them, otherwise from mod/nms_ext.py (declared
+the NMS.py way). Structures are read with NMS.py's classes; a raw offset is used only where build
+being played differs from what NMS.py describes, or where NMS.py has no field, with a note.
+
 Proven in spike S2 (2026-09-29, build 179666): calling RepairTechnology on a repair step pays
-the normal materials, repairs the step, and the game saves the result. Function locations come
-from a read-only static scan of NMS.exe (work/re); each signature matches exactly once there.
+the normal materials, repairs the step, and the game saves the result.
 
 Rules kept here:
 - Repairs only ever go through the game's own RepairTechnology, never free / repair-kit paths,
@@ -18,140 +21,43 @@ import ctypes
 import functools
 import math
 import re
-from ctypes import c_bool, c_float, c_int32, c_uint32, c_uint64
 from ctypes import wintypes
-from typing import Annotated
 
 from pymhf.core import _internal
-from pymhf.core.hooking import Structure, function_hook
+from pymhf.core.functions import _get_funcdef
 from pymhf.core.memutils import get_addressof, map_struct
-
-from ctypes import _Pointer  # noqa: E402,I001  after pymhf: it swaps in a subscriptable _Pointer on import
 
 import nmspy.data.exported_types as nmse
 import nmspy.data.types as nms
+from nmspy.common import gameData
 from nmspy.data.enums import InventoryChoice
 
-from . import core
+from . import core, nms_ext
 
-GAME_BUILD = 179666
-STORE_SIZE = 0x248
-INVENTORIES_OFFSET = 0x900      # GetInventory() is called on cGcPlayerState + 0x900
-INVENTORIES_ARRAY = 0x910       # cGcPlayerState.mInventories
-# Primary-ship stores by the group number GetInventory() uses, in build 179666. NMS.py 180132.0
-# (made for build 180132) has mShipInventoriesTechOnly at 0xAA28 and InventoryChoice 5/6 the
-# other way round: build differences, so read these from 179666 itself.
-SHIP_STORES = {4: ('general', 0x7458), 5: ('tech', 0xAB28), 6: ('cargo', 0x8FC8)}
+GAME_BUILD = 180383
+STORE_SIZE = ctypes.sizeof(nms.cGcInventoryStore)       # 0x248
+_PS = nms.cGcPlayerState
+INVENTORIES_ARRAY = _PS.mInventories.offset             # 0x910
+# Primary-ship stores by the group number GetInventory() uses (5 = tech, 6 = cargo),
+# at NMS.py's own field offsets (0x7458 / 0xAB28 / 0x8FC8 - the tech array's annotation says
+# 0xAA28, but the field is laid out after the 12 cargo stores, at 0xAB28, which the game uses).
+SHIP_STORES = {4: ('general', _PS.mShipInventories.offset), 5: ('tech', _PS.mShipInventoriesTechOnly.offset),
+               6: ('cargo', _PS.mShipInventoriesCargo.offset)}
 GROUP_REPAIR_STEPS = 24         # the steps of the part whose repair screen is open
 SUBSTANCE, TECHNOLOGY, PRODUCT = 0, 1, 2   # cGcInventoryType
 MAX_STEPS = 64                  # safety cap for one repair run
 STEP_ID = re.compile(r'^R(\d+)_')   # repair step ids: "R%d_%.12s" (0xEA92F0)
-REPAIR_BUFFER = 0x182A8         # cGcPlayerState: parts with started step repairs
-REPAIR_ENTRY_SIZE = 0x1B0       # sizeof(cGcRepairTechData)
+REPAIR_ENTRY_SIZE = ctypes.sizeof(nmse.cGcRepairTechData)   # 0x1B0
 
-# On-screen message, set up exactly the way the game's own callers do (e.g. RVA 0x3CD216).
-# These are RVAs in build 179666 and move with every game update: see running_build().
-DATA_GLOBAL = 0x6E7AAE8         # holds the cGcApplication::Data pointer
-NOTIFICATIONS_OFFSET = 0x837B40 # Data + this = the player notifications object
-MESSAGE_TIME = 0x4B19A78        # float the game passes as display time (1.0)
-MESSAGE_COLOUR = 0x51FDD50      # the game's default notification colour
-MESSAGE_AUDIO = 0x3C2700B8      # the sound id the game's callers pass
-LANGUAGE_MANAGER = 0x6E01550    # what the game's GetLanguageManager (RVA 0x1CB3B0) returns
-# cGcPlayerGlobals.DamageRepairFactor (static instance at RVA 0x52368B0, field +0x10A4), filled
-# from GCPLAYERGLOBALS.GLOBAL.MBIN at start-up. Discounted cost = ceil(amount * factor).
-DAMAGE_REPAIR_FACTOR = 0x5237954
-
-
-class GameRepair(Structure):
-    """Game functions NMS.py does not map yet; call them on map_struct(player_state, GameRepair).
-
-    `this` is typed as a pointer to this class (string annotation) so ctypes accepts the call.
-    """
-
-    # RVA 0x5930A0: checks and pays the cost, clears the damage, removes a blocking
-    # damaged-component item, bumps the repair stat. Returns true on success.
-    @function_hook(
-        "48 8B C4 4C 89 40 ? 89 50 ? 48 89 48 ? 55 53 48 8D 68 ? 48 81 EC ? ? ? ? 48 89 70 ? 33 DB "
-        "48 89 78 ? 41 0F B6 F9"
-    )
-    def RepairTechnology(
-        self,
-        this: "_Pointer[GameRepair]",
-        liGroup: Annotated[int, c_int32],
-        lIndex: _Pointer[nmse.cGcInventoryIndex],
-        lbFree: Annotated[bool, c_bool],
-        lbFullCost: Annotated[bool, c_bool],
-        lbUseRepairKit: Annotated[bool, c_bool],
-    ) -> c_bool: ...
-
-    # RVA 0x592CD0: GetElement + can-afford check (read-only), same cost formula.
-    @function_hook(
-        "48 89 5C 24 ? 57 48 83 EC ? 48 8B C2 48 8B F9 48 8B C8 49 8B D1 41 8B D8 E8 ? ? ? ? 48 85 C0 "
-        "74 ? 44 0F B6 4C 24"
-    )
-    def CanRepairTechnology(
-        self,
-        this: "_Pointer[GameRepair]",
-        lpStore: _Pointer[nms.cGcInventoryStore],
-        liGroup: Annotated[int, c_int32],
-        lIndex: _Pointer[nmse.cGcInventoryIndex],
-        lbFullCost: Annotated[bool, c_bool],
-    ) -> c_bool: ...
-
-
-class GameInventories(Structure):
-    """Lives at cGcPlayerState + 0x900. Only called, never hooked (it has hundreds of callers)."""
-
-    # RVA 0x47BDB0: the store for an inventory group; subIndex -1 means "current ship/vehicle".
-    @function_hook(
-        "48 89 5C 24 ? 57 48 83 EC ? 48 8B D9 41 83 F8 FF 75 ? 8B CA 83 E9 04 74 ? 83 E9 01 74 ? 83 E9 01 "
-        "74 ? 83 E9 04 74 ? 83 F9 01 75 ? 48 8B 03 44 8B 80 ? ? ? ? EB ? 48 8B 03 44 8B 80 ? ? ? ? 33 FF "
-        "83 FA FF 0F 45 FA 83 FF FF 75 ? 48 8D 43"
-    )
-    def GetInventory(
-        self,
-        this: Annotated[int, c_uint64],
-        liGroup: Annotated[int, c_int32],
-        liSubIndex: Annotated[int, c_int32],
-    ) -> c_uint64: ...
-
-
-class GameNotifications(Structure):
-    """The player notifications object (Data + 0x837B40). Only called, never hooked."""
-
-    # RVA 0x9B8300 cGcPlayerNotifications::AddTimedMessage. NMS.py 180132.0 lists 10 arguments;
-    # build 179666 takes 11 (three trailing bools; the 8th is a float). Read from the game's
-    # own 124 call sites, which all fill [rsp+20..50] this way.
-    @function_hook("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 44 8B 81")
-    def AddTimedMessage(
-        self,
-        this: Annotated[int, c_uint64],
-        lsMessage: Annotated[int, c_uint64],        # char buffer (cTkFixedString<512>)
-        lfDisplayTime: Annotated[float, c_float],
-        lColour: Annotated[int, c_uint64],          # Colour*
-        liAudioID: Annotated[int, c_uint32],
-        lIcon: Annotated[int, c_uint64],            # cTkSmartResHandle* (int32 0 = no icon)
-        lb7: Annotated[bool, c_bool],
-        lf8: Annotated[float, c_float],
-        lb9: Annotated[bool, c_bool],
-        lb10: Annotated[bool, c_bool],
-        lb11: Annotated[bool, c_bool],
-    ) -> None: ...
-
-
-class GameLanguage(Structure):
-    """The game's language manager. Only called, never hooked."""
-
-    # RVA 0x2BD9570: text key (e.g. "UI_NANOTUBES_NAME", max 31 chars, case-insensitive) ->
-    # the translated text in the player's language. The game's callers pass 0 as the third
-    # argument (e.g. RVA 0x3BD7B3) and use the returned char* right away.
-    @function_hook("48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? 0F 57 C0 49 8B E8")
-    def Translate(
-        self,
-        this: Annotated[int, c_uint64],
-        lpacKey: Annotated[int, c_uint64],
-        a3: Annotated[int, c_uint64],
-    ) -> c_uint64: ...
+# Build 180383 data locations NMS.py 180383.0 does not give (work/re/notes_180383.txt). Game
+# functions are all found by byte pattern; these can move with game updates, which is why the mod
+# switches itself off on other builds.
+INVENTORIES_OFFSET = 0x900      # cGcPlayerState + this: the object GetInventory() is called on
+REPAIR_BUFFER = 0x182A8         # cGcPlayerState + this: tk_vector<cGcRepairTechData> RepairTechBuffer
+NOTIFICATIONS_OFFSET = 0x847BB0 # cGcApplication::Data + this: cGcPlayerNotifications (caller 0x3CD267)
+# The on-screen message is set up the way the game's own callers do it (e.g. RVA 0x3CD216).
+MESSAGE_TIME = 1.0              # display time the callers pass
+MESSAGE_AUDIO = 0x3C2700B8      # the sound id the callers pass
 
 
 class Names:
@@ -210,16 +116,29 @@ def translate_key(key: str) -> str:
     base = _internal.BASE_ADDRESS
     if base in (None, -1) or not build_supported():
         return ''
+    manager = int(nms.cTkLanguageManager.GetInstance() or 0)
+    if not manager:
+        return ''
     raw = ctypes.create_string_buffer(key.encode('ascii', 'ignore')[:31], 32)
-    fn = map_struct(base + LANGUAGE_MANAGER, GameLanguage)
-    ptr = fn.Translate(ctypes.addressof(raw), 0)
+    lang = map_struct(manager, nms.cTkLanguageManagerBase)
+    result = lang.Translate_internal(ctypes.addressof(raw), None)       # no fallback, like the game's callers
+    ptr = int(getattr(result, 'value', result) or 0)                    # c_char_p64 (or a plain int)
     if not ptr:
         return ''
     return ctypes.string_at(ptr).decode('utf-8', 'replace')      # up to the NUL, like the game reads it
 
 
+def data_address() -> int:
+    """cGcApplication::Data, through NMS.py (gameData.GcApplication is set once the game's state
+    machine starts); 0 before that."""
+    app = gameData.GcApplication
+    if app is None:
+        return 0
+    return get_addressof(app.mpData) or 0
+
+
 def running_build(path: str = None) -> str:
-    """FileVersion string of the running NMS.exe (e.g. '179666'), or '' if it can't be read."""
+    """FileVersion string of the running NMS.exe (e.g. '180383'), or '' if it can't be read."""
     return _file_version(path or getattr(_internal, 'BINARY_PATH', '') or '')
 
 
@@ -255,17 +174,28 @@ def show_message(text: str) -> bool:
     base = _internal.BASE_ADDRESS
     if base in (None, -1) or not build_supported():
         return False
-    data = ctypes.c_uint64.from_address(base + DATA_GLOBAL).value
+    data = data_address()
     if not data:
         return False
+    ui = getattr(_globals, 'GcUIGlobals', None)
+    if ui is None:
+        return False
     this = data + NOTIFICATIONS_OFFSET
-    message = ctypes.create_string_buffer(text.encode('utf-8')[:511], 512)
-    icon = ctypes.c_int32(0)
-    duration = ctypes.c_float.from_address(base + MESSAGE_TIME).value
-    fn = map_struct(this, GameNotifications)
-    fn.AddTimedMessage(ctypes.addressof(message), duration, base + MESSAGE_COLOUR, MESSAGE_AUDIO,
-                       ctypes.addressof(icon), False, 0.0, False, False, False)
+    hook = nms.cGcPlayerNotifications.AddTimedMessage
+    message = ctypes.create_string_buffer(text.encode('utf-8')[:511], 512)   # cTkFixedString<512>
+    icon = ctypes.c_int32(0)                                                 # no icon
+    fn = map_struct(this, nms.cGcPlayerNotifications)
+    fn.AddTimedMessage(as_arg(hook, 1, ctypes.addressof(message)), MESSAGE_TIME,
+                       as_arg(hook, 3, ctypes.addressof(ui.HUDWarningColour)), MESSAGE_AUDIO,
+                       as_arg(hook, 5, ctypes.addressof(icon)), False, 0.0, False, False, False)
     return True
+
+
+def as_arg(hook, index: int, address: int):
+    """`address` as the exact pointer type NMS.py declared for argument `index` (0 = this) of a
+    game function. Needed because e.g. cTkFixedString[512] makes a new class each time it is
+    written, and ctypes only accepts the declared one."""
+    return ctypes.cast(address, _get_funcdef(hook._func).arg_types[index])
 
 
 # ── readers ──────────────────────────────────────────────────────────────────
@@ -336,11 +266,9 @@ def _repair_entries(ps):
         return
     for i in range(count):
         e = ptr + i * REPAIR_ENTRY_SIZE
-        x = ctypes.c_int32.from_address(e + 0x1A0).value
-        y = ctypes.c_int32.from_address(e + 0x1A4).value
-        ship = ctypes.c_int32.from_address(e + 0x1A8).value
-        group = ctypes.c_int32.from_address(e + 0x1AC).value
-        yield e, (group, ship, x, y)
+        entry = map_struct(e, nmse.cGcRepairTechData)
+        yield e, (int(entry.InventoryType), int(entry.InventorySubIndex),
+                  int(entry.InventoryIndex.X), int(entry.InventoryIndex.Y))
 
 
 def repairs_in_progress(ps) -> set:
@@ -357,11 +285,10 @@ def started_repairs(ps) -> dict:
     steps are named from a seed (R0_SHIPSL247927), so the step number is all that is used."""
     out = {}
     for e, key in _repair_entries(ps):
-        ptr = ctypes.c_uint64.from_address(e + 0x10).value
-        n = ctypes.c_uint32.from_address(e + 0x18).value
+        slots = map_struct(e, nmse.cGcRepairTechData).MaintenanceContainer.InventoryContainer.Slots
         steps = []
-        if ptr and 0 < n <= MAX_STEPS:
-            for el in map_struct(ptr, nmse.cGcInventoryElement * n):
+        if slots.ArrayPointer and 0 < slots.Size <= MAX_STEPS:
+            for el in slots:
                 gid, _x, _y, _amount, dmg, _typ, installed = row(el)
                 m = STEP_ID.match(gid)
                 if m:
@@ -447,12 +374,28 @@ def label(ps, address: int) -> str:
 
 # ── costs (for showing the plan; the game's own CanRepair still decides) ─────
 def repair_factor():
-    """The game's DamageRepairFactor, or None if it doesn't look like a sane multiplier."""
-    base = _internal.BASE_ADDRESS
-    if base in (None, -1) or not build_supported():
+    """The game's DamageRepairFactor (cGcPlayerGlobals, through NMS.py), or None if the globals
+    aren't mapped or it doesn't look like a sane multiplier."""
+    player = getattr(_globals, 'GcPlayerGlobals', None)
+    if player is None or not build_supported():
         return None
-    value = ctypes.c_float.from_address(base + DAMAGE_REPAIR_FACTOR).value
+    value = float(player.DamageRepairFactor)
     return value if 0.0 < value <= 4.0 else None
+
+
+_globals = None     # NMS.py's mapped global tables, once load_globals() has run
+
+
+def load_globals() -> bool:
+    """Map the game's global tables with NMS.py (it finds them by name in NMS.exe, ~0.5 s, cached
+    by pyMHF afterwards). Imported here, not at the top: nmspy.globals copies pyMHF's base
+    address when it is imported. Run once on the game thread, during the loading screen."""
+    global _globals
+    if _globals is None:
+        import nmspy.globals as nms_globals
+        nms_globals.globals.instantiate_globals()
+        _globals = nms_globals.globals
+    return getattr(_globals, 'GcPlayerGlobals', None) is not None and getattr(_globals, 'GcUIGlobals', None) is not None
 
 
 def tech_requirements(reality) -> dict:
@@ -547,7 +490,8 @@ def shortfall_text(plan: core.RepairPlan, name=lambda gid: gid, limit: int = 3) 
 
 # ── game calls ───────────────────────────────────────────────────────────────
 def get_inventory(ps, group: int) -> int:
-    return int(map_struct(get_addressof(ps) + INVENTORIES_OFFSET, GameInventories).GetInventory(group, -1) or 0)
+    inventories = map_struct(get_addressof(ps) + INVENTORIES_OFFSET, nms_ext.cGcPlayerInventories)
+    return int(inventories.GetInventory(group, -1) or 0)
 
 
 def open_repair_steps(ps):
@@ -565,7 +509,7 @@ class GameCalls:
     """The two game calls the repair loop needs, bound to one player state."""
 
     def __init__(self, ps):
-        self._fn = map_struct(get_addressof(ps), GameRepair)
+        self._fn = map_struct(get_addressof(ps), nms_ext.cGcPlayerState)
 
     def can_repair(self, store, group, x, y, full_cost):
         idx = nmse.cGcInventoryIndex()

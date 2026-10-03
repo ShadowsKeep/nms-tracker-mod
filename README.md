@@ -5,9 +5,9 @@ An in-game No Man's Sky mod (built on [NMS.py](https://github.com/monkeyman192/N
 like the game's own tabs, that shows the current ship's damaged parts and repairs them at the
 normal material cost.
 
-> **Work in progress, game build 179666 only.** Every game address in here is for that build
-> and moves with each game update; the mod checks the build and switches itself off on any
-> other. Not released yet.
+> **Work in progress, game build 180383 with NMS.py 180383.0.** Game functions are found by byte
+> pattern; the few data offsets NMS.py doesn't give can move with each game update, so the mod
+> checks the build and switches itself off on any other. Not released yet.
 
 ## Status (2026-09-29)
 
@@ -18,7 +18,8 @@ normal material cost.
 | Messages through the game's own on-screen notifications, item names in the game's language | Working in game |
 | **REPAIRS tab** in the inventory tab row (click and Q/E / A/D select it) | Working in game (spikes `s3b` / `s3c`, mod v0.4) |
 | **REPAIRS screen**: the page's own right-hand panel shows the repair summary | Working in game (v0.5.1) |
-| **REPAIRS grids**: the Starship grids show the damaged parts ("Repair") and the materials they need as have / needed ("Materials"), locked | v0.6.0 runs in game (both grids drawn, no errors); look to be confirmed with a screenshot |
+| **REPAIRS grids**: the Starship grids show the damaged parts ("Repair") and the materials they need as have / needed ("Materials"), locked | Runs in game (v0.6.0 on 179666 with damage; v0.7.0 on 180383 with no damage: empty grids, labels shown); filled grids on 180383 still to be seen |
+| **Build 180383 + NMS.py 180383.0** (v0.7.0) | Tab, screen, grids, A/D, Starship click, Esc and F7 ran in game 2026-10-03, no errors |
 
 No extra windows: pyMHF's GUI and log console are turned off; everything happens in the game.
 
@@ -49,14 +50,14 @@ The tab spikes run the same way: `cd nms-tracker-mod\spikes` then `pymhf run s3c
 ## How the tab works
 
 No data mod: the tab row (`PAGESELECTBAR`, slots `OPTION1..7`) is drawn every frame by the
-game's `DrawPageSelectBar`; the inventory never uses more than 5 slots, so the mod fills the next
+game's `cGcFrontendPageFunctions::DoToolbar`; the inventory never uses more than 5 slots, so the mod fills the next
 free one after the game draws the row. The tab is "Starship page + a mod flag", so the game never
 sees an unknown page. Clicks use the game's own click test; Q/E (A/D) are handled by adjusting the
 page the game's own previous/next code opens.
 
 The screen itself: the game refills the Starship page's right-hand panel every frame before it
 draws the tab row, so right after the tab row the mod rewrites the panel through the game's own
-helpers (`SetPageTitle`, `StatRow`) and hides the grids for that frame. It only changes things the
+helpers (`SetPageTitle`, `SetStatRow`) and draws its own copies in the grids. It only changes things the
 game rewrites itself every frame, so when REPAIRS is left the game's next frame is simply normal
 again; nothing has to be put back. Details, addresses and the reasoning are in
 [`spikes/README.md`](spikes/README.md).
@@ -75,6 +76,7 @@ mod/tab.py             the REPAIRS tab (drawing, click and Q/E selection), from 
 mod/screen.py          the REPAIRS screen (summary in the page's own panel, grids hidden)
 mod/display.py         display-only inventory copies for the REPAIRS grids (damaged parts, materials)
 mod/grids.py           draws those copies in the game's own Starship grids, locked (DoInventory hook)
+mod/nms_ext.py         game functions NMS.py doesn't declare yet, written the NMS.py way (for upstream)
 mod/game.py            game function declarations, memory readers, repair loop, costs, names
 mod/core.py            repair planning across parts and the tab's summary panel, pure Python
 mod/backup.py          save-slot backup before repairs (read-only on the game's files)
@@ -86,18 +88,32 @@ test-logs/             logs and repair reports from the in-game test runs (user 
 Not in the repo: `work/` (static analysis notes and disassembly of the game executable),
 save-data reports and UI dumps from the spikes.
 
-## Game build vs NMS.py
+## Game build and NMS.py
 
-This mod was written and tested against game build **179666** (the Steam build installed here),
-while NMS.py 180132.0 targets build **180132**. Offsets that differ between the two are build
-differences, not NMS.py mistakes. For example, the frontend manager is `Data + 0x859090` in
-180132 (NMS.py) and `Data + 0x849020` in 179666. These are the values this mod uses on 179666;
-none has been checked against 180132:
+The mod was built and tested on game build 179666 with NMS.py 180132.0, which was made for build
+180132, so some offsets differed between the two (build differences, not NMS.py mistakes). The
+game has since updated to **build 180383**, and **NMS.py 180383.0** is made for exactly that
+build, so from v0.7 the mod uses NMS.py's own declarations wherever they exist:
+`cGcFrontendManager.Activate` (opening a page), `cGcFrontendPageFunctions.DoToolbar` (the tab
+row), `cGcPlayerNotifications.AddTimedMessage`, `cTkLanguageManager.GetInstance`,
+`cTkLanguageManagerBase.Translate_internal`, the `cGcInventoryStore` constructor, the
+`cGcNGuiLayer` element finders, and NMS.py's structures (player state, inventory store and
+elements, repair records, UI element data, player globals, `gameData`).
 
-- `cGcPlayerState` ship tech inventories at `0xAB28` (NMS.py: `0xAA28`).
-- The game's `GetInventory` groups 5 = ship tech, 6 = ship cargo.
-- `cGcPlayerNotifications.AddTimedMessage` takes 11 arguments.
-- Frontend manager `Data + 0x849020`, page at manager + `0x2BA0`.
+Game functions the mod needs that NMS.py 180383.0 does not declare are in
+[`mod/nms_ext.py`](mod/nms_ext.py), written the NMS.py way so they can be offered upstream. The
+names are descriptive; the game's own names aren't known here:
+
+| Declared as | RVA (180383) | What it does |
+|---|---|---|
+| `cGcPlayerState.RepairTechnology` | 0x5963A0 | pays and repairs one damaged slot or repair step |
+| `cGcPlayerState.CanRepairTechnology` | 0x595FD0 | the can-afford check the repair menu uses |
+| `cGcPlayerInventories.GetInventory` | 0x47DDA0 | inventory group -> store (called on `cGcPlayerState + 0x900`) |
+| `cGcFrontendManager.PrevNextPage` | 0x8FAD60 | previous / next inventory tab (A/D, Q/E) |
+| `cGcFrontendManager.RequestPage` | 0x314B40 | ask for a page, like a tab click |
+| `cGcFrontendPageFunctions.SetPageTitle` | 0x7CD430 | TITLE > MAINTEXT / SUBTEXT |
+| `cGcFrontendPageFunctions.DoInventory` | 0x6B1240 | one inventory grid; calls `DoInventorySlots` |
+| `cGcFrontendPageFunctions.SetStatRow` | 0x6ADEE0 | one stat row (name, value, bar) in the right-hand panel |
 
 More in [`spikes/README.md`](spikes/README.md).
 

@@ -11,74 +11,41 @@ doesn't know. The mod's hooks call into RepairsTab:
 - OpenPage only starts a page switch (state 6 + target page); the current page changes frames
   later, so "switching to Starship" counts as still on REPAIRS.
 
-Every game address is for build 179666 (work/re/notes_inventory_tabs.txt), checked in the code;
-each signature matches exactly once in that build.
+The game functions are declared in mod/nms_ext.py (cGcFrontendManager.OpenPage / PrevNextPage /
+RequestPage, cGcFrontendPage.DrawPageSelectBar); the mod's hooks pass plain addresses in here.
+The manager fields below are build 180383's (work/re/notes_180383.txt); the frontend manager's
+place in Data comes from NMS.py.
 """
 import ctypes
 import logging
-from ctypes import c_bool, c_int32, c_uint64
-from typing import Annotated
 
-from pymhf.core import _internal
-from pymhf.core.hooking import Structure, function_hook
 from pymhf.core.memutils import map_struct
 
 import nmspy.data.types as nms
 
-from . import game
+from . import game, nms_ext
 
 LABEL = b'REPAIRS'
 MAX_TABS = 7                  # the game's loop covers OPTION1..OPTION7
 SHIP_PAGE = 1                 # page enum of the Starship inventory
-MANAGER_OFFSET = 0x849020     # Data + this = cGcFrontendManager
-PAGE_FROM_MANAGER = 0x2BA0    # manager + this = the frontend page (DrawPageSelectBar's `this`)
-LIST_FROM_MANAGER = 0x5BD60   # inventory tab list {u32 cap, u32 count, TabEntry*}; pause menu is +0x5BD70
-CURRENT_PAGE = 0x17018        # manager + this: current page (changes when a switch finishes)
-STATE = 0x1C3F8               # manager + this: frontend state, 6 = switching page (OpenPage 0x8F70F7)
+# Build 180383 (work/re/notes_180383.txt). Data + MANAGER_OFFSET = cGcFrontendManager, from NMS.py.
+MANAGER_OFFSET = nms.cGcApplication.Data.mFrontendManager.offset   # 0x859090
+PAGE_FROM_MANAGER = 0x2BA0    # manager + this = the page DoToolbar gets (RenderPage 0x905CDE; NMS.py's mPage says 0x2790)
+LIST_FROM_MANAGER = 0x5BD80   # inventory tab list {u32 cap, u32 count, TabEntry*} (Activate 0x8FC3EF); pause menu +0x5BD90
+CURRENT_PAGE = 0x17028        # manager + this: current page (changes when a switch finishes; Activate 0x8FC669)
+STATE = 0x1C408               # manager + this: frontend state, 6 = switching page (Activate 0x8FC677)
 SWITCHING = 6
-TARGET_PAGE = 0x2B4C          # manager + this: page being switched to
-PENDING_PAGE = 0x177B8        # manager + this: -1 when no page request is pending
+TARGET_PAGE = 0x2B4C          # manager + this: page being switched to (Activate 0x8FC681)
+PENDING_PAGE = 0x177C8        # manager + this: -1 when no page request is pending (DoToolbar 0x6C53EE)
 TAB_ENTRY_SIZE = 0x28         # {i32 page, pad, TkID<0x20> loc key at +8}
-CLICKED = 0xFE                # element state byte (+0x50) the game treats as a click (0x6C150D)
-DUMMY_ELEMENT = 0x6E716C0     # RVA of the element GetTextSpecial returns for unknown IDs
+CLICKED = 0xFE                # element state byte (+0x50) the game treats as a click (DoToolbar 0x6C53DD)
 SET_TEXT_SLOT = 0x90          # cGcNGuiTextSpecial vtable slot the game calls to set text
 SetTextFn = ctypes.CFUNCTYPE(None, ctypes.c_uint64, ctypes.c_char_p)
 
 
-class GameTabs(Structure):
-    # RVA 0x6C05A0 DrawPageSelectBar(page, barTop, TabList*, bool bShow) - hooked before and after
-    @function_hook(
-        "48 89 5C 24 ? 44 88 4C 24 ? 48 89 54 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? "
-        "48 81 EC ? ? ? ? 66 0F 6F 0D"
-    )
-    def DrawPageSelectBar(self, this: Annotated[int, c_uint64], lpBarTop: Annotated[int, c_uint64],
-                          lpTabList: Annotated[int, c_uint64], lbShow: Annotated[bool, c_bool]) -> None: ...
-
-    # RVA 0x315FB0 GetTextSpecial(layer, TkID<0x10>*, bUseDefault) -> element (called only)
-    @function_hook("48 89 5C 24 ? 57 48 83 EC ? 48 8B 99 ? ? ? ? 41 0F B6 F8 41 B8 02 00 00 00")
-    def GetTextSpecial(self, this: Annotated[int, c_uint64], lpID: Annotated[int, c_uint64],
-                       lbUseDefault: Annotated[bool, c_bool]) -> c_uint64: ...
-
-    # RVA 0x8F6D40 cGcFrontendManager::OpenPage(manager, page, flag) -> bool - hooked before and after
-    @function_hook("40 55 56 57 41 57 48 8B EC 48 83 EC ? 8B 81 ? ? ? ? 45 0F B6 F8 48 63 F2 48 8B F9 83 F8 04")
-    def OpenPage(self, this: Annotated[int, c_uint64], liPage: Annotated[int, c_int32],
-                 lbFlag: Annotated[bool, c_bool]) -> c_bool: ...
-
-    # RVA 0x8F57E0 previous/next tab (A/D), this = &manager - hooked before and after
-    @function_hook("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 41 56 48 83 EC ? 48 8B F1 40 32 FF")
-    def PrevNextPage(self, this: Annotated[int, c_uint64], lbNext: Annotated[bool, c_bool]) -> None: ...
-
-    # RVA 0x314B10 cGcFrontendManager::RequestPage(manager, page, flag) - called only, like a tab click
-    @function_hook(
-        "48 89 5C 24 ? 57 48 83 EC ? 8B 81 ? ? ? ? 0F 57 C0 8B FA 48 8B D9 0F 11 44 24 ? 0F 11 44 24 ? 85 C0 74"
-    )
-    def RequestPage(self, this: Annotated[int, c_uint64], liPage: Annotated[int, c_int32],
-                    lbFlag: Annotated[bool, c_bool]) -> None: ...
-
-
 # ── small helpers (reads/writes mirror what DrawPageSelectBar itself does) ───
 def manager() -> int:
-    data = ctypes.c_uint64.from_address(_internal.BASE_ADDRESS + game.DATA_GLOBAL).value
+    data = game.data_address()
     return data + MANAGER_OFFSET if data else 0
 
 
@@ -106,17 +73,17 @@ def tab_key(tab_list: int, index: int) -> str:
 
 
 def text_special(layer: int, ident: str) -> int:
-    """The game's own lookup; 0 when the element doesn't exist (the game returns a dummy)."""
-    tk = ctypes.create_string_buffer(ident.encode()[:15], 16)
-    found = int(map_struct(layer, GameTabs).GetTextSpecial(ctypes.addressof(tk), True) or 0)
-    return 0 if found in (0, _internal.BASE_ADDRESS + DUMMY_ELEMENT) else found
+    """A Text_Special element (OPTION1, OPTION1_OFF, ...) through NMS.py's FindTextSpecialRecursive
+    (the game's own FindElementRecursive); 0 when it doesn't exist."""
+    found = map_struct(layer, nms.cGcNGuiLayer).FindTextSpecialRecursive(ident)
+    return ctypes.addressof(found) if found is not None else 0
 
 
 def set_hidden(element: int, hidden: bool):
-    """Byte IsHidden at element->mpElementData (+0x48) + 0x61, as the game writes it."""
-    data = ctypes.c_uint64.from_address(element + 0x48).value
+    """cGcNGuiElement.mpElementData->IsHidden (NMS.py), the flag the game itself writes."""
+    data = map_struct(element, nms.cGcNGuiElement).mpElementData
     if data:
-        ctypes.c_uint8.from_address(data + 0x61).value = 1 if hidden else 0
+        data.contents.IsHidden = bool(hidden)
 
 
 def set_text(element: int, text: bytes):
@@ -126,6 +93,7 @@ def set_text(element: int, text: bytes):
 
 
 def clicked(element: int) -> bool:
+    """Input state byte at element + 0x50 (not in NMS.py's cGcNGuiElement), 0xFE = clicked."""
     return ctypes.c_uint8.from_address(element + 0x50).value == CLICKED
 
 
@@ -296,7 +264,7 @@ class RepairsTab:
                     self.select(True, 'clicked on the Starship page')
                 elif i32(mgr + PENDING_PAGE) == -1:
                     self.entering = True
-                    map_struct(mgr, GameTabs).RequestPage(SHIP_PAGE, True)
+                    map_struct(mgr, nms_ext.cGcFrontendManager).RequestPage(SHIP_PAGE, True)
                     self.log.info('REPAIRS clicked: asked the game for the Starship page')
         except Exception:
             self.once('error', 'Drawing the REPAIRS tab failed', logging.ERROR)

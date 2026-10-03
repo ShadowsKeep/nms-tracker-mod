@@ -12,6 +12,7 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 os.environ.setdefault('PYTEST_VERSION', '1')
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,13 +34,11 @@ PAGES = [(0, 'SUIT'), (1, 'SHIP'), (4, 'WEAPON')]
 class RepairsTabTest(unittest.TestCase):
     def setUp(self):
         self.keep = []
-        image = self.buf(16)
-        self.base = image - game.DATA_GLOBAL
-        self._saved = (tab._internal.BASE_ADDRESS, FunctionHook._call, tab.nms.cGcNGuiLayer.FindLayerRecursive,
-                       game.translate_key)
-        tab._internal.BASE_ADDRESS = self.base
+        L = tab.nms.cGcNGuiLayer
+        self._saved = (game.gameData.GcApplication, FunctionHook._call, L.FindLayerRecursive,
+                       L.FindTextSpecialRecursive, game.translate_key)
         data = self.buf(tab.MANAGER_OFFSET + tab.LIST_FROM_MANAGER + 0x40)
-        ctypes.c_uint64.from_address(image).value = data
+        game.gameData.GcApplication = SimpleNamespace(mpData=ctypes.c_void_p(data))   # as NMS.py sets it
         self.mgr = data + tab.MANAGER_OFFSET
         self.page = self.mgr + tab.PAGE_FROM_MANAGER
         self.list = self.mgr + tab.LIST_FROM_MANAGER
@@ -68,7 +67,9 @@ class RepairsTabTest(unittest.TestCase):
 
         bar = tab.nms.cGcNGuiLayer.from_buffer(bytearray(ctypes.sizeof(tab.nms.cGcNGuiLayer)))
         self.keep.append(bar)
-        tab.nms.cGcNGuiLayer.FindLayerRecursive = lambda s, ident: bar if ident == 'PAGESELECTBAR' else None
+        L.FindLayerRecursive = lambda s, ident: bar if ident == 'PAGESELECTBAR' else None
+        L.FindTextSpecialRecursive = lambda s, ident: (
+            tab.nms.cGcNGuiElement.from_address(self.E[ident]) if ident in self.E else None)
         game.translate_key = lambda key: {'SHIP': 'STARSHIP'}.get(key, '')
         test = self
 
@@ -80,7 +81,8 @@ class RepairsTabTest(unittest.TestCase):
         self.set_page(0)
 
     def tearDown(self):
-        (tab._internal.BASE_ADDRESS, FunctionHook._call, tab.nms.cGcNGuiLayer.FindLayerRecursive,
+        L = tab.nms.cGcNGuiLayer
+        (game.gameData.GcApplication, FunctionHook._call, L.FindLayerRecursive, L.FindTextSpecialRecursive,
          game.translate_key) = self._saved
 
     # ── fake game ────────────────────────────────────────────────────────────
@@ -102,8 +104,6 @@ class RepairsTabTest(unittest.TestCase):
         for t, a in zip(fd.arg_types, flat):
             t.from_param(a)
         name = hook._func.__name__
-        if name == 'GetTextSpecial':
-            return self.E.get(ctypes.string_at(flat[1]).decode(), self.base + tab.DUMMY_ELEMENT)
         if name == 'RequestPage':
             self.requests.append(flat[1])
             self.open_page(flat[1])
@@ -212,8 +212,7 @@ class RepairsTabTest(unittest.TestCase):
         self.assertFalse(self.tab.active)
 
     def test_refused_page_request(self):
-        FunctionHook._call = lambda hook, *a, **k: (self.E.get(ctypes.string_at(a[1]).decode(), self.base + tab.DUMMY_ELEMENT)
-                                                    if hook._func.__name__ == 'GetTextSpecial' else None)
+        FunctionHook._call = lambda hook, *a, **k: None             # RequestPage: the game defers it
         self.click('OPTION4_OFF')
         self.tab.before_draw(self.page, 0x1000, self.list, True)
         self.tab.after_draw(self.page, 0x1000, self.list, True)

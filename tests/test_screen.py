@@ -36,6 +36,16 @@ TREE = [('CLASS_BOX', 'CLASS_BOX', 'ROOT'), ('STAT_BOX', 'STAT_BOX', 'ROOT'),
 TEXTS = {'INV_TECH_LABEL', 'INV_MAIN_LABEL'}        # found as text elements, not layers
 
 
+def addr(x):
+    """The address behind an argument pyMHF passed: byref(struct) for `this`, a typed pointer, or
+    a plain int."""
+    if hasattr(x, '_obj'):
+        return ctypes.addressof(x._obj)
+    if isinstance(x, int):
+        return x
+    return ctypes.cast(x, ctypes.c_void_p).value          # pyMHF swaps ctypes._Pointer, so no isinstance
+
+
 class Clock:
     def __init__(self):
         self.t = 100.0
@@ -149,11 +159,11 @@ class RepairsScreenTest(unittest.TestCase):
     def test_draw_fills_the_panel_through_the_game_helpers(self):
         self.s.draw(self.page)
         (title,) = self.game_calls('SetPageTitle')
-        self.assertEqual(title[0], self.page)
+        self.assertEqual(addr(title[0]), self.page)                  # `this`: byref(the page)
         self.assertEqual((ctypes.string_at(title[1]), ctypes.string_at(title[2]), title[3]),
                          (b'Ship Repairs', b'3 damaged parts', False))
-        got = [(r[0], ctypes.string_at(r[1]).decode(), ctypes.string_at(r[2]).decode(), round(r[3], 2), r[4])
-               for r in self.game_calls('StatRow')]
+        got = [(addr(r[0]), ctypes.string_at(r[1]).decode(), ctypes.string_at(r[2]).decode(), round(r[3], 2), r[4])
+               for r in self.game_calls('SetStatRow')]
         self.assertEqual(got, [
             (self.E['BASE_STAT_BAR1'], 'Repair now (F7)', '1', round(33.3 * 3.2, 2), 0.0),
             (self.E['BASE_STAT_BAR2'], 'Need materials', '1', round(33.3 * 3.2, 2), 0.0),
@@ -186,7 +196,7 @@ class RepairsScreenTest(unittest.TestCase):
     def test_fewer_rows_hide_the_rest_but_never_row_five(self):
         self.s.set_content(core.repair_panel(core.repair_board([], set(), {}), max_rows=screen.ROWS))
         self.s.draw(self.page)
-        self.assertEqual([ctypes.string_at(r[1]) for r in self.game_calls('StatRow')], [b'All parts working'])
+        self.assertEqual([ctypes.string_at(r[1]) for r in self.game_calls('SetStatRow')], [b'All parts working'])
         self.assertEqual([self.hidden(f'BASE_STAT_BAR{i}') for i in (2, 3, 4)], [1, 1, 1])
         self.assertNotIn('BASE_STAT_BAR5', self.lookups)
 
@@ -223,7 +233,7 @@ class RepairsScreenTest(unittest.TestCase):
         with self.assertNoLogs('test.screen', logging.ERROR):
             self.s.draw(self.page)
         self.assertEqual(self.hidden('SECTION1'), 1)         # written to the new element
-        self.assertEqual(len(self.game_calls('StatRow')), 8)
+        self.assertEqual(len(self.game_calls('SetStatRow')), 8)
 
     def test_safe_reads(self):
         gone = freed_page()

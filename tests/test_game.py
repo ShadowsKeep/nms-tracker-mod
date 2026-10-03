@@ -10,6 +10,7 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 os.environ.setdefault('PYTEST_VERSION', '1')      # pyMHF prompts on import outside a real console
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +26,16 @@ except ImportError:                                # pragma: no cover - NMS.py n
     HAVE_NMSPY = False
 
 PS_SIZE = 0x18400
+
+
+def addr(x):
+    """The address behind an argument pyMHF passed: byref(struct) for `this`, a typed pointer, or
+    a plain int."""
+    if hasattr(x, '_obj'):
+        return ctypes.addressof(x._obj)
+    if isinstance(x, int):
+        return x
+    return ctypes.cast(x, ctypes.c_void_p).value          # pyMHF swaps ctypes._Pointer, so no isinstance
 
 
 def make_store(buf_addr, rows, width=10, height=2, capacity=20):
@@ -172,7 +183,7 @@ class GameCallTestBase(unittest.TestCase):
     def setUp(self):
         if not HAVE_NMSPY:
             self.skipTest('NMS.py not installed')
-        self.calls = []
+        self.calls, self.this = [], []
         self._orig = FunctionHook._call
         test = self
 
@@ -182,6 +193,7 @@ class GameCallTestBase(unittest.TestCase):
             for argtype, arg in zip(fd.arg_types, flat):
                 argtype.from_param(arg)
             test.calls.append((hook._func.__name__, flat[1:]))
+            test.this.append(flat[0] if flat else None)
             return test.answer(hook._func.__name__, flat)
         FunctionHook._call = fake_call
 
@@ -210,24 +222,27 @@ class CallArgumentsTest(GameCallTestBase):
         self.assertEqual(game.get_inventory(self.ps, 24), 1)
 
     def test_show_message_builds_the_games_arguments(self):
-        span = game.DATA_GLOBAL + 8 - game.MESSAGE_TIME
-        image = ctypes.create_string_buffer(span)
-        base = ctypes.addressof(image) - game.MESSAGE_TIME
+        base = 0x140000000
         data = ctypes.create_string_buffer(game.NOTIFICATIONS_OFFSET + 0x400)
-        ctypes.c_uint64.from_address(base + game.DATA_GLOBAL).value = ctypes.addressof(data)
-        ctypes.c_float.from_address(base + game.MESSAGE_TIME).value = 1.0
-        orig_base, orig_supported = game._internal.BASE_ADDRESS, game.build_supported
+        ui = game.nmse.cGcUIGlobals.from_buffer(bytearray(ctypes.sizeof(game.nmse.cGcUIGlobals)))
+        orig = (game._internal.BASE_ADDRESS, game.build_supported, game.gameData.GcApplication, game._globals)
         try:
             game._internal.BASE_ADDRESS = base
             game.build_supported = lambda: True
+            game.gameData.GcApplication = SimpleNamespace(mpData=ctypes.c_void_p(ctypes.addressof(data)))
+            game._globals = None
+            self.assertFalse(game.show_message('no globals mapped yet'))
+            game._globals = SimpleNamespace(GcUIGlobals=ui)
             self.assertTrue(game.show_message('NMS Tracker: repaired 2 step(s)'))
         finally:
-            game._internal.BASE_ADDRESS, game.build_supported = orig_base, orig_supported
+            (game._internal.BASE_ADDRESS, game.build_supported, game.gameData.GcApplication, game._globals) = orig
         name, args = self.calls[-1]
         self.assertEqual(name, 'AddTimedMessage')
+        self.assertEqual(addr(self.this[-1]), ctypes.addressof(data) + game.NOTIFICATIONS_OFFSET)
         self.assertEqual(len(args), 10)                            # 11 including `this`
         self.assertEqual(args[1], 1.0)                             # the game's own display time
-        self.assertEqual(args[2], base + game.MESSAGE_COLOUR)      # the game's own colour
+        self.assertEqual(addr(args[2]), ctypes.addressof(ui) + 0x5640)  # GcUIGlobals.HUDWarningColour (NMS.py)
+        self.assertEqual(game.nmse.cGcUIGlobals.HUDWarningColour.offset, 0x5640)
         self.assertEqual(args[3], game.MESSAGE_AUDIO)
 
     def test_show_message_refuses_other_builds(self):
@@ -247,9 +262,12 @@ class NamesTest(GameCallTestBase):
     def setUp(self):
         super().setUp()
         self.text = ctypes.create_string_buffer('Carbon Nanotubes'.encode())
+        self.lang = ctypes.create_string_buffer(0x100)
 
     def answer(self, name, args):
-        if name == 'Translate':
+        if name == 'GetInstance':                            # cTkLanguageManager (static)
+            return ctypes.addressof(self.lang)
+        if name == 'Translate_internal':                     # NMS.py's cTkLanguageManagerBase
             self.key_seen = ctypes.string_at(args[1])
             return ctypes.addressof(self.text)
         return True
@@ -289,7 +307,8 @@ class NamesTest(GameCallTestBase):
             game._internal.BASE_ADDRESS, game.build_supported = orig_base, orig_supported
         self.assertEqual(self.key_seen, b'UI_NANOTUBES_NAME')
         name, args = self.calls[-1]
-        self.assertEqual((name, args[1]), ('Translate', 0))
+        self.assertEqual((name, args[1]), ('Translate_internal', None))    # no fallback text
+        self.assertEqual(addr(self.this[-1]), ctypes.addressof(self.lang))  # on the game's language manager
 
     def test_name_translates_and_falls_back(self):
         names = game.Names()
@@ -413,20 +432,21 @@ class CostTest(unittest.TestCase):
         self.assertEqual(game.shortfall_text(plan, {'LAND1': 'Ferrite Dust'}.get), '20 Ferrite Dust')
 
     def test_repair_factor_reads_the_game_value_and_rejects_nonsense(self):
-        image = ctypes.create_string_buffer(8)
-        base = ctypes.addressof(image) - game.DAMAGE_REPAIR_FACTOR
-        orig_base, orig_supported = game._internal.BASE_ADDRESS, game.build_supported
+        player = game.nmse.cGcPlayerGlobals.from_buffer(bytearray(ctypes.sizeof(game.nmse.cGcPlayerGlobals)))
+        orig_globals, orig_supported = game._globals, game.build_supported
         try:
-            game._internal.BASE_ADDRESS = base
             game.build_supported = lambda: True
-            ctypes.c_float.from_address(ctypes.addressof(image)).value = 0.5
+            game._globals = None
+            self.assertIsNone(game.repair_factor())                        # NMS.py globals not mapped yet
+            game._globals = SimpleNamespace(GcPlayerGlobals=player)        # as nmspy.globals maps them
+            player.DamageRepairFactor = 0.5
             self.assertEqual(game.repair_factor(), 0.5)
-            ctypes.c_float.from_address(ctypes.addressof(image)).value = 0.0      # not loaded yet
+            player.DamageRepairFactor = 0.0                                # not loaded yet
             self.assertIsNone(game.repair_factor())
-            ctypes.c_float.from_address(ctypes.addressof(image)).value = 1e9
+            player.DamageRepairFactor = 1e9
             self.assertIsNone(game.repair_factor())
         finally:
-            game._internal.BASE_ADDRESS, game.build_supported = orig_base, orig_supported
+            game._globals, game.build_supported = orig_globals, orig_supported
 
 
 @unittest.skipUnless(HAVE_NMSPY, 'NMS.py not installed')
@@ -564,17 +584,23 @@ class ModEntryTest(unittest.TestCase):
         m = self.load()
         mod = m.NMSTrackerMod()
         self.assertEqual(sorted((h._hook_func_name, h._hook_time.name) for h in mod.hooks), [
-            ('GameGrid.DoInventory', 'BEFORE'),
-            ('GameRepair.CanRepairTechnology', 'AFTER'),
-            ('GameTabs.DrawPageSelectBar', 'AFTER'), ('GameTabs.DrawPageSelectBar', 'BEFORE'),
-            ('GameTabs.OpenPage', 'AFTER'), ('GameTabs.OpenPage', 'BEFORE'),
-            ('GameTabs.PrevNextPage', 'AFTER'), ('GameTabs.PrevNextPage', 'BEFORE'),
+            ('cGcFrontendManager.Activate', 'AFTER'), ('cGcFrontendManager.Activate', 'BEFORE'),      # NMS.py
+            ('cGcFrontendManager.PrevNextPage', 'AFTER'), ('cGcFrontendManager.PrevNextPage', 'BEFORE'),
+            ('cGcFrontendPageFunctions.DoInventory', 'BEFORE'),
+            ('cGcFrontendPageFunctions.DoToolbar', 'AFTER'), ('cGcFrontendPageFunctions.DoToolbar', 'BEFORE'),  # NMS.py
+            ('cGcPlayerState.CanRepairTechnology', 'AFTER'),
         ])
         self.assertFalse(mod.tab.enabled)            # off until the game build is checked
         self.assertEqual([f._hotkey for f in mod._hotkey_funcs], ['f7'])
         self.assertEqual(len(mod._gui_widgets), 0)
         self.assertTrue(getattr(m.NMSTrackerMod, '_no_gui', False))
         self.assertEqual(len(mod._custom_callbacks), 1)
+
+    def test_hooks_hand_the_game_its_own_this_back(self):
+        m = self.load()
+        ptr = ctypes.pointer(ctypes.c_uint64(5))
+        self.assertIsNone(m.with_this(ptr, None))
+        self.assertEqual(m.with_this(ptr, (0x1234, 1, True)), (ptr, 1, True))
 
     def test_screen_panel_from_game_memory(self):
         m = self.load()

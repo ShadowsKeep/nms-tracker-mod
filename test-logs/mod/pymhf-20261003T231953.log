@@ -1,0 +1,37 @@
+2026-10-03 23:19:53,379 root                     INFO   Loading pyMHF...
+2026-10-03 23:19:53,703 pymem                    DEBUG  Process 49852 is being debugged
+2026-10-03 23:19:56,443 pymem                    DEBUG  Process 49852 is being debugged
+2026-10-03 23:19:57,259 root                     INFO   pyMHF injection complete!
+2026-10-03 23:19:57,259 root                     INFO   Loading mods
+2026-10-03 23:19:58,358 root                     INFO   Loaded 3 mods and 10 hooks in 1.099s
+2026-10-03 23:19:58,364 pymhf.core.utils         WARNING Cannot find window handle for PID 49852
+2026-10-03 23:19:58,366 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-10-03 23:20:11,777 root                     INFO   New State: APPCORESERVICES
+2026-10-03 23:20:11,782 NMSTracker               INFO   Game build 180383: supported. F7 repairs; REPAIRS tab on.
+2026-10-03 23:20:13,749 root                     INFO   New State: APPGLOBALLOAD
+2026-10-03 23:20:22,670 root                     INFO   New State: MODESELECTOR
+2026-10-03 23:20:34,156 root                     INFO   New State: APPLOCALLOAD
+2026-10-03 23:21:00,632 root                     INFO   New State: APPVIEW
+2026-10-03 23:21:07,247 NMSTracker               INFO   REPAIRS tab drawn in slot 4 (after 3 game tabs)
+2026-10-03 23:21:08,809 NMSTracker               INFO   REPAIRS selected (page 1 opened)
+2026-10-03 23:21:08,810 NMSTracker               INFO   REPAIRS clicked: asked the game for the Starship page
+2026-10-03 23:21:09,209 NMSTracker               INFO   Backed up 2 save slot(s) to %USERPROFILE%\AppData\Local\ShadowskeepLLC\NMSTrackerMod\backups before showing the REPAIRS grids
+2026-10-03 23:21:09,213 NMSTracker               INFO   Loaded 2706 item names from the game
+2026-10-03 23:21:09,215 NMSTracker               INFO   Loaded repair costs for 393 technologies; repair factor 0.5
+2026-10-03 23:21:09,215 NMSTracker               INFO   REPAIRS screen: 0 damaged: 0 repair now, 0 need materials, 0 need repair screen
+2026-10-03 23:21:09,216 NMSTracker               INFO   REPAIRS screen: 4 rows, 3 layers to hide, 6 grid layers, 2 grid labels, section1=yes
+2026-10-03 23:21:09,316 NMSTracker               INFO   REPAIRS screen drawn (grids: hidden)
+2026-10-03 23:21:09,382 NMSTracker               INFO   REPAIRS materials grid: 0 slots (SQU_INV_REGULAR, 10 columns)
+2026-10-03 23:21:09,382 NMSTracker               INFO   REPAIRS parts grid: 0 slots (SQU_INV_TECH, 10 columns)
+2026-10-03 23:21:09,383 NMSTracker               INFO   REPAIRS screen drawn (grids: mod)
+2026-10-03 23:21:13,035 NMSTracker               INFO   REPAIRS left (page 0 opened)
+2026-10-03 23:21:13,602 NMSTracker               INFO   REPAIRS selected (page 0 opened)
+2026-10-03 23:21:13,985 NMSTracker               INFO   REPAIRS left (page 0 opened)
+2026-10-03 23:21:14,368 NMSTracker               INFO   REPAIRS selected (page 0 opened)
+2026-10-03 23:21:37,324 NMSTracker               INFO   REPAIRS left (Starship clicked)
+2026-10-03 23:21:43,036 NMSTracker               INFO   REPAIRS selected (page 0 opened)
+2026-10-03 23:21:46,703 NMSTracker               INFO   REPAIRS left (page 7 opened)
+2026-10-03 23:21:50,704 NMSTracker               INFO   REPAIRS selected (page 1 opened)
+2026-10-03 23:21:50,704 NMSTracker               INFO   REPAIRS clicked: asked the game for the Starship page
+2026-10-03 23:21:57,015 NMSTracker               INFO   your ship has nothing to repair
+2026-10-03 23:22:02,838 NMSTracker               INFO   REPAIRS left (page 7 opened)

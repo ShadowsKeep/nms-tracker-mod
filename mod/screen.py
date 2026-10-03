@@ -7,7 +7,7 @@ How it works (static scan, work/re/notes_inventory_panel.txt, key points checked
   DrawPageSelectBar, and draws the UI later (cGcFrontendManager::Render). So writing the panel
   from the mod's after-hook on DrawPageSelectBar shows in the same frame.
 - The mod only changes what the game itself rewrites on every Starship frame, so nothing has to
-  be put back when REPAIRS is left: the title (SetPageTitle), stat rows 1-4 (StatRow, via the
+  be put back when REPAIRS is left: the title (SetPageTitle), stat rows 1-4 (SetStatRow, via the
   game's LiveStats), SECTION1's hidden flag (BaseStats), the top CLASS_BOX's hidden flag and the
   grids' hidden flags (DoInventoryPageBody). Never touched: SECTION1 > NATURAL's text and
   BASE_STAT_BAR5 (layout-only, the game never rewrites them), and the class badge in
@@ -18,24 +18,23 @@ How it works (static scan, work/re/notes_inventory_panel.txt, key points checked
   dropped on any page open, on another page, a new root, or a gap between frames; each frame it is
   also re-checked by the stored element IDs with reads that can't crash on freed memory.
 
-Build 179666 only; each signature matches exactly once in that build.
+The game functions are declared in mod/nms_ext.py (cGcFrontendPageFunctions.SetPageTitle and
+.SetStatRow, static, page / row first). The page offsets below are checked per build.
 """
 import ctypes
 import logging
 import time
-from ctypes import c_bool, c_float, c_int32, c_uint32, c_uint64
-from typing import Annotated
 
-from pymhf.core.hooking import Structure, function_hook
 from pymhf.core.memutils import map_struct
 
 import nmspy.data.types as nms
 
-from . import tab
+from . import nms_ext, tab
 
-ROOT_FROM_PAGE = 0x14468          # *(page + this) = the page's root layer
-PAGE_ENUM_FROM_PAGE = 0x14478     # *(i32*)(page + this) = current page enum (1 = Starship)
-BAR_UNITS = 320.0                 # a full stat bar is 320 layout units (StatRow's MAINBAR width)
+ROOT_FROM_PAGE = 0x14478          # *(page + this) = the page's root layer (180383: SetPageTitle 0x7CD544;
+                                  # NMS.py 180383.0's cGcFrontendPage.mRootNode still says 0x14468)
+PAGE_ENUM_FROM_PAGE = 0x14488     # *(i32*)(page + this) = current page enum, 1 = Starship (0x6AF2E8)
+BAR_UNITS = 320.0                 # a full stat bar is 320 layout units (SetStatRow's MAINBAR width)
 ROWS = 4                          # rows the game's LiveStats rewrites every Starship frame
 ALWAYS_HIDE = ('EDITGRP', 'FILTERS')    # edit button; sort buttons (they would sort a display store)
 GRID_LAYERS = ('SQU_INV_TECH', 'SQU_INV_REGULAR', 'SQU_TECH_BIG', 'SQU_ITEM_BIG', 'TECHHEADER', 'CARGOHEADER')
@@ -46,28 +45,12 @@ MAX_GAP = 0.25                    # seconds without a frame = the inventory was 
 USER_MIN, USER_MAX = 0x10000, 0x7FFFFFFFFFFF
 
 
-class GameScreen(Structure):
-    """Only called, never hooked."""
-
-    # RVA 0x6A9FD0 StatRow(row layer, label, value text, mainW [xmm3], bonusW [rsp+20h], iconId, compare)
-    @function_hook(
-        "48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC ? 48 8B 41 ? 4C 8B FA "
-        "48 8B F1 0F 29 74 24 ? 4D 8B F0 0F 57 C0 0F 11 45"
-    )
-    def StatRow(self, this: Annotated[int, c_uint64], lpLabel: Annotated[int, c_uint64],
-                lpValue: Annotated[int, c_uint64], lfMain: Annotated[float, c_float],
-                lfBonus: Annotated[float, c_float], luIcon: Annotated[int, c_uint32],
-                liCompare: Annotated[int, c_int32]) -> None: ...
-
-    # RVA 0x7C9350 SetPageTitle(page, const char* main, const char* sub, bool bUseTitleRes)
-    @function_hook(
-        "4C 8B DC 55 56 57 48 83 EC ? 66 0F 6F 0D ? ? ? ? 48 8B F2 49 8B E8 49 89 5B ? 41 0F B6 D9 4D 89 73"
-    )
-    def SetPageTitle(self, this: Annotated[int, c_uint64], lpMain: Annotated[int, c_uint64],
-                     lpSub: Annotated[int, c_uint64], lbUseTitleRes: Annotated[bool, c_bool]) -> None: ...
-
-
 # ── element helpers (the game's own lookups through NMS.py's wrappers) ───────
+def pointer_to(addr: int, cls):
+    """A typed pointer for a game function argument declared as _Pointer[cls]."""
+    return ctypes.cast(addr, ctypes.POINTER(cls))
+
+
 def ok_ptr(p) -> bool:
     return isinstance(p, int) and USER_MIN <= p <= USER_MAX
 
@@ -205,7 +188,8 @@ class RepairsScreen:
                 self.once('noel', 'REPAIRS screen: panel elements not found', logging.WARNING)
                 return
             self._strings = []
-            map_struct(page, GameScreen).SetPageTitle(self._cstr(self.title), self._cstr(self.subtitle), False)
+            nms_ext.cGcFrontendPageFunctions.SetPageTitle(
+                pointer_to(page, nms.cGcFrontendPage), self._cstr(self.title), self._cstr(self.subtitle), False)
             if el['section1']:
                 tab.set_hidden(el['section1'], True)
             for i, row in enumerate(el['rows']):
@@ -214,8 +198,8 @@ class RepairsScreen:
                 if i < len(self.rows):
                     r = self.rows[i]
                     width = max(0.0, min(100.0, float(r.fill))) * BAR_UNITS / 100.0
-                    map_struct(row, GameScreen).StatRow(self._cstr(r.label), self._cstr(r.value),
-                                                        width, 0.0, 0, 0)
+                    nms_ext.cGcFrontendPageFunctions.SetStatRow(
+                        pointer_to(row, nms.cGcNGuiLayer), self._cstr(r.label), self._cstr(r.value), width, 0.0, 0, 0)
                 else:
                     tab.set_hidden(row, True)
             for layer in el['hide']:

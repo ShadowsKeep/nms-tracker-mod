@@ -4,10 +4,11 @@ The REPAIRS screen's two grids: the game's own Starship grids, drawn from displa
 While REPAIRS is on, the mod's before-hook on DoInventory swaps in its own stores for the Starship
 page's two grids: damaged parts in the tech grid, the materials they need in the cargo grid. The
 game draws them exactly like its own inventories, fully locked. Static scan and reasoning:
-work/re/notes_inventory_grid.txt (build 179666).
+work/re/notes_inventory_grid.txt (build 179666; re-checked for 180383 in notes_180383.txt).
 
-DoInventory 0x6AD330 (page, store, layer, bAccessible, slotActions*, bViewOnly, bool* out, mask,
-minRows, columns, slotSize, bNoScroll). The mod calls through with:
+cGcFrontendPageFunctions.DoInventory (mod/nms_ext.py, static: page, store, layer, bAccessible,
+slotActions*, bViewOnly, bool* out, mask, minRows, columns, slotSize, bNoScroll). The mod calls
+through with:
 - store = a DisplayStore (built with the game's constructor);
 - bAccessible = False: filled slots locked (no pick-up / drag / quick transfer), no drop into
   empty slots;
@@ -25,43 +26,33 @@ the locks don't cover are guarded here:
 """
 import ctypes
 import logging
-from ctypes import c_bool, c_int32, c_uint64
-from typing import Annotated
 
-from pymhf.core.hooking import Structure, function_hook
 from pymhf.core.memutils import map_struct
+
+import nmspy.data.types as nms
 
 from . import display, screen, tab
 
 PARTS_LAYERS = ('SQU_INV_TECH', 'SQU_TECH_BIG')          # the Starship tech grid
 MATERIAL_LAYERS = ('SQU_INV_REGULAR', 'SQU_ITEM_BIG')    # the Starship cargo grid
-HELD_STORE = 0x19640          # page + this: store of the item being held (0 = none)
-HELD_X, HELD_Y = 0x19630, 0x19634   # page + this: its slot (-1 = none)
-HELD_FLAG = 0x1965C           # page + this: byte, another held-item state
-
-
-class GameGrid(Structure):
-    # RVA 0x6AD330 DoInventory - hooked before (arguments swapped while REPAIRS is on)
-    @function_hook("44 88 4C 24 ? 4C 89 44 24 ? 55 41 55 41 56 48 81 EC ? ? ? ? 49 8B E8 4C 8B EA "
-                   "4C 8B F1 4D 85 C0 74 ? 49 8B 40 ? 80 78 ? 00 0F 85")
-    def DoInventory(self, this: Annotated[int, c_uint64], lpStore: Annotated[int, c_uint64],
-                    lpLayer: Annotated[int, c_uint64], lbAccessible: Annotated[bool, c_bool],
-                    lpSlotActions: Annotated[int, c_uint64], lbViewOnly: Annotated[bool, c_bool],
-                    lpOutFlag: Annotated[int, c_uint64], liMask: Annotated[int, c_int32],
-                    liMinRows: Annotated[int, c_int32], liColumns: Annotated[int, c_int32],
-                    liSlotSize: Annotated[int, c_int32], lbNoScroll: Annotated[bool, c_bool]) -> None: ...
-
-    # RVA 0x4CA2A0 cGcInventoryStore::cGcInventoryStore(this) - called only, once per display store
-    @function_hook("48 89 5C 24 ? 57 48 83 EC ? 33 FF 0F 57 C0 0F 11 01 48 8B D9 0F 11 41 ? 0F 11 41 ? 0F 11 41")
-    def ConstructStore(self, this: Annotated[int, c_uint64]) -> c_uint64: ...
+# build 180383 (DoInventorySlots 0x6B43D7..0x6B43F3)
+HELD_STORE = 0x19650          # page + this: store of the item being held (0 = none)
+HELD_X, HELD_Y = 0x19640, 0x19644   # page + this: its slot (-1 = none)
+HELD_FLAG = 0x1966C           # page + this: byte, another held-item state
 
 
 def construct_with_game(addr: int):
-    """The game's own constructor on a mod-owned store; falls back to the static-scan copy when the
-    call does not leave the map's self-pointers in place."""
-    map_struct(addr, GameGrid).ConstructStore()
+    """The game's own constructor (NMS.py's cGcInventoryStore.cGcInventoryStore) on a mod-owned
+    store; falls back to the static-scan copy when the call does not leave the map's
+    self-pointers in place."""
+    map_struct(addr, nms.cGcInventoryStore).cGcInventoryStore()
     if ctypes.c_uint64.from_address(addr + 0x218).value != addr + 0x230:
         display.construct_like_game(addr)
+
+
+def store_pointer(addr: int):
+    """The display store as the _Pointer[cGcInventoryStore] DoInventory is declared with."""
+    return ctypes.cast(addr, ctypes.POINTER(nms.cGcInventoryStore))
 
 
 def item_held(page: int) -> bool:
