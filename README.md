@@ -21,18 +21,35 @@ normal material cost.
 | Messages through the game's own on-screen notifications, item names in the game's language | Working in game |
 | **REPAIRS tab** in the inventory tab row (click and Q/E / A/D select it) | Working in game (spikes `s3b` / `s3c`, mod v0.4) |
 | **REPAIRS screen**: the page's own right-hand panel shows the repair summary | Working in game (v0.5.1) |
-| **REPAIRS grids**: the Starship grids show the damaged parts ("Repair") and the materials they need as have / needed ("Materials"), locked | Runs in game (v0.6.0 on 179666 with damage; v0.7.0 on 180383 with no damage: empty grids, labels shown); filled grids on 180383 still to be seen |
+| **REPAIRS grids**: the Starship grids show the damaged parts ("Repair") and the materials they need as have / needed ("Materials"), locked | Working in game (build 180383, 2026-10-03): 11 damaged parts with the game's damage markers; materials read "8 / 420" in the slot. Known: a material you have none of, and products (e.g. Wiring Loom), show no count in the slot (the right-hand panel and the log still give have / needed) |
 | **Build 180383 + NMS.py 180383.0** (v0.7.0) | Tab, screen, grids, A/D, Starship click, Esc and F7 ran in game 2026-10-03, no errors |
 
 No extra windows: pyMHF's GUI and log console are turned off; everything happens in the game.
 
-## Try it (cmd or PowerShell, game closed)
+## Install (players)
+
+The download is one folder, `NMSTrackerMod`, with a player guide inside (`README.txt`). With the
+game closed, from cmd or PowerShell:
+
+```
+python -m pip install nmspy==180383.0
+pymhf run "C:\path\to\NMSTrackerMod\nmstracker_mod.py"
+```
+
+That runs the mod on its own, with no extra windows. To run it with your other NMS.py mods instead,
+copy the `NMSTrackerMod` folder into your NMS.py mod directory (set it once with
+`pymhf config nmspy`) and start with `pymhf run nmspy`. NMS.py loads only `nmstracker_mod.py`;
+the mod's own code sits one level down in `nmstracker\`, so it's never mistaken for a mod.
+
+## Try it from the repo (cmd or PowerShell, game closed)
 
 ```
 python -m pip install -r requirements.txt
-cd nms-tracker-mod\mod
+cd nms-tracker-mod\NMSTrackerMod
 pymhf run nmstracker_mod.py
 ```
+
+Build the download zip with `python tools\package.py` (it writes `dist\NMSTrackerMod.zip`).
 
 - **REPAIRS tab** (inventory, next to the last tab): the ship's damage in the game's own panel,
   with bars for parts you can repair now, parts that need materials, parts that need their
@@ -74,18 +91,20 @@ first, and keep the backups.
 ## Layout
 
 ```
-mod/nmstracker_mod.py  the NMS.py mod: REPAIRS tab hooks, F7, cost-rule check, backups, reports, messages
-mod/tab.py             the REPAIRS tab (drawing, click and Q/E selection), from spike S3c
-mod/screen.py          the REPAIRS screen (summary in the page's own panel, grids hidden)
-mod/display.py         display-only inventory copies for the REPAIRS grids (damaged parts, materials)
-mod/grids.py           draws those copies in the game's own Starship grids, locked (DoInventory hook)
-mod/nms_ext.py         game functions NMS.py doesn't declare yet, written the NMS.py way (for upstream)
-mod/game.py            game function declarations, memory readers, repair loop, costs, names
-mod/core.py            repair planning across parts and the tab's summary panel, pure Python
-mod/backup.py          save-slot backup before repairs (read-only on the game's files)
-spikes/                step-by-step experiments (S1 read, S2 repair, S3 UI / tab) and their notes
-tests/                 python -m unittest discover -s tests (offline; fake game memory in ctypes)
-test-logs/             logs and repair reports from the in-game test runs (user paths replaced)
+NMSTrackerMod/                      the mod folder (this is what goes into NMS.py's mod folder)
+  nmstracker_mod.py                 the mod: REPAIRS tab hooks, F7, cost-rule check, backups, reports, messages
+  nmstracker/                       its package (one level down, so pyMHF never loads these files as mods)
+    tab.py                          the REPAIRS tab (drawing, click and Q/E selection), from spike S3c
+    screen.py                       the REPAIRS screen (summary in the page's own right-hand panel)
+    display.py                      display-only inventory copies for the REPAIRS grids
+    grids.py                        draws those copies in the game's own Starship grids, locked
+    nms_ext.py                      game functions NMS.py doesn't declare yet, written the NMS.py way
+    game.py                         memory readers, repair loop, costs, names, messages
+    core.py                         repair planning and the screen's summary, pure Python
+    backup.py                       save-slot backup before repairs (read-only on the game's files)
+spikes/                             step-by-step experiments (S1 read, S2 repair, S3 UI / tab), build 179666
+tests/                              python -m unittest discover -s tests (offline; fake game memory in ctypes)
+test-logs/                          logs and repair reports from the in-game test runs (user paths replaced)
 ```
 
 Not in the repo: `work/` (static analysis notes and disassembly of the game executable),
@@ -104,7 +123,7 @@ row), `cGcPlayerNotifications.AddTimedMessage`, `cTkLanguageManager.GetInstance`
 elements, repair records, UI element data, player globals, `gameData`).
 
 Game functions the mod needs that NMS.py 180383.0 does not declare are in
-[`mod/nms_ext.py`](mod/nms_ext.py), written the NMS.py way so they can be offered upstream. The
+[`NMSTrackerMod/nmstracker/nms_ext.py`](NMSTrackerMod/nmstracker/nms_ext.py), written the NMS.py way so they can be offered upstream. The
 names are descriptive; the game's own names aren't known here:
 
 | Declared as | RVA (180383) | What it does |
@@ -130,7 +149,7 @@ build) and the [code of conduct](CODE_OF_CONDUCT.md). Questions and ideas go to
 ## Licence
 
 [MIT](LICENSE), the same as NMS.py and pyMHF, so the game function declarations in
-`mod/nms_ext.py` can move into NMS.py freely. No Man's Sky and its data belong to Hello Games; this
+`NMSTrackerMod/nmstracker/nms_ext.py` can move into NMS.py freely. No Man's Sky and its data belong to Hello Games; this
 repo contains no game files.
 
 ## Requirements (for players, once released)

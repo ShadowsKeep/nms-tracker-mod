@@ -166,7 +166,7 @@ page `manager+0x17018` changes frames later (0x8F7860). v0.2 keeps REPAIRS while
 or switching to the Starship page, and ignores repeat clicks mid-switch. The offline check now
 switches pages over several frames; with the v0.1 rule it fails at the same point as in game.
 
-**REPAIRS screen (mod v0.5, `mod/screen.py`, no spike):** while REPAIRS is selected, the
+**REPAIRS screen (mod v0.5, `NMSTrackerMod/nmstracker/screen.py`, no spike):** while REPAIRS is selected, the
 Starship page's right-hand panel shows the repair summary and the grids are hidden. Static scan
 (`work/re/notes_inventory_panel.txt`): for the Ship page the game fills the whole panel every
 frame *before* DrawPageSelectBar and renders later, so the mod writes the panel from its
@@ -215,7 +215,7 @@ Components get steps too (`R0_SHIPSL<n>`...), once their repair screen has been 
 Leaving REPAIRS by clicking Starship or with A/D has not been run with the screen yet (only
 page 7, the menu closing).
 
-**REPAIRS grids (mod v0.6.0, `mod/grids.py` + `mod/display.py`):** the Starship page's own tech and
+**REPAIRS grids (mod v0.6.0, `NMSTrackerMod/nmstracker/grids.py` + `NMSTrackerMod/nmstracker/display.py`):** the Starship page's own tech and
 cargo grids draw display-only copies: damaged parts ("Repair") and the materials they still need
 ("Materials", amount = have, max = needed). Static analysis in `work/re/notes_inventory_grid.txt`
 (DoInventory 0x6AD330 is hooked before; locked, empty slot actions, mask 0; stores built by the

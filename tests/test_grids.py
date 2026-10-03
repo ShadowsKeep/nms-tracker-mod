@@ -1,4 +1,4 @@
-"""Offline tests for mod/grids.py: when the REPAIRS grids replace the game's Starship grids, and
+"""Offline tests for nmstracker/grids.py: when the REPAIRS grids replace the game's Starship grids, and
 exactly which arguments DoInventory then gets (checked with ctypes' own conversion)."""
 import ctypes
 import logging
@@ -9,13 +9,13 @@ from pathlib import Path
 
 os.environ.setdefault('PYTEST_VERSION', '1')
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'NMSTrackerMod'))
 
 try:
     from pymhf.core.functions import _get_funcdef
     from pymhf.core.hooking import FunctionHook
 
-    from mod import display, grids, nms_ext, screen, tab
+    from nmstracker import display, grids, nms_ext, screen, tab
     HAVE_NMSPY = True
 except ImportError:                                # pragma: no cover - NMS.py not installed
     HAVE_NMSPY = False

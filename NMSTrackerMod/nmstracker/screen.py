@@ -18,7 +18,7 @@ How it works (static scan, work/re/notes_inventory_panel.txt, key points checked
   dropped on any page open, on another page, a new root, or a gap between frames; each frame it is
   also re-checked by the stored element IDs with reads that can't crash on freed memory.
 
-The game functions are declared in mod/nms_ext.py (cGcFrontendPageFunctions.SetPageTitle and
+The game functions are declared in nmstracker/nms_ext.py (cGcFrontendPageFunctions.SetPageTitle and
 .SetStatRow, static, page / row first). The page offsets below are checked per build.
 """
 import ctypes

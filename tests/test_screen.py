@@ -1,4 +1,4 @@
-"""Offline tests for mod/screen.py (the REPAIRS screen) against a fake element tree in memory.
+"""Offline tests for nmstracker/screen.py (the REPAIRS screen) against a fake element tree in memory.
 
 The fake page (root pointer at +0x14468, page enum at +0x14478) holds a small tree shaped like the
 live InventoryPage dump from spike S3 (two CLASS_BOX layers: a top one, and one in the stats panel).
@@ -14,13 +14,13 @@ from pathlib import Path
 
 os.environ.setdefault('PYTEST_VERSION', '1')
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'NMSTrackerMod'))
 
 try:
     from pymhf.core.functions import _get_funcdef
     from pymhf.core.hooking import FunctionHook
 
-    from mod import core, screen, tab
+    from nmstracker import core, screen, tab
     HAVE_NMSPY = True
 except ImportError:                                # pragma: no cover - NMS.py not installed
     HAVE_NMSPY = False

@@ -35,12 +35,12 @@ body:
     id: log
     attributes:
       label: Log
-      description: The newest file in `mod/logs/`. Replace your Windows user name in the paths (e.g. with %USERPROFILE%) before pasting.
+      description: The newest file in `NMSTrackerMod/logs/`. Replace your Windows user name in the paths (e.g. with %USERPROFILE%) before pasting.
       render: text
   - type: checkboxes
     id: checks
     attributes:
       label: Checks
       options:
-        - label: I ran the mod with `pymhf run nmstracker_mod.py` from the `mod` folder, with the game closed.
+        - label: I ran the mod with `pymhf run nmstracker_mod.py` from the `NMSTrackerMod` folder, with the game closed.
         - label: I removed personal details (user name, Steam ID) from what I pasted.

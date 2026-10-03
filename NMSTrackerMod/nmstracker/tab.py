@@ -11,8 +11,9 @@ doesn't know. The mod's hooks call into RepairsTab:
 - OpenPage only starts a page switch (state 6 + target page); the current page changes frames
   later, so "switching to Starship" counts as still on REPAIRS.
 
-The game functions are declared in mod/nms_ext.py (cGcFrontendManager.OpenPage / PrevNextPage /
-RequestPage, cGcFrontendPage.DrawPageSelectBar); the mod's hooks pass plain addresses in here.
+The hooks are on NMS.py's cGcFrontendManager.Activate (a page open) and
+cGcFrontendPageFunctions.DoToolbar (the tab row), and on PrevNextPage / RequestPage from
+nmstracker/nms_ext.py; the mod's hooks pass plain addresses in here.
 The manager fields below are build 180383's (work/re/notes_180383.txt); the frontend manager's
 place in Data comes from NMS.py.
 """
@@ -115,6 +116,7 @@ class RepairsTab:
         self.entering = False        # we asked the game for the Starship page to show REPAIRS
         self.intent = None           # (bNext, was_active, current page) while the game's A/D code runs
         self._next_active = None     # decided in OpenPage-before, applied in OpenPage-after if it opened
+        self._opening = None         # the page the game actually opens (after a swap), for the log
         self._reported = set()
 
     def once(self, key, text, level=logging.INFO):
@@ -160,18 +162,20 @@ class RepairsTab:
             self._next_active = None
             if not self.enabled or this != manager():
                 return None
-            page = int(liPage)
+            page = self._opening = int(liPage)
             if self.intent is not None:
                 going_next, was_active, current = self.intent
                 pages = tab_pages(this + LIST_FROM_MANAGER)
                 if pages and current in pages:
                     if was_active:
                         self._next_active = False
-                        return (this, pages[0] if going_next else pages[-1], lbFlag)
+                        self._opening = pages[0] if going_next else pages[-1]
+                        return (this, self._opening, lbFlag)
                     at_end = current == (pages[-1] if going_next else pages[0])
                     if at_end and len(pages) < MAX_TABS:
                         self._next_active = True             # wrap onto REPAIRS instead
                         self.entering = False
+                        self._opening = SHIP_PAGE
                         return (this, SHIP_PAGE, lbFlag)
                 self._next_active = False
                 return None
@@ -188,7 +192,8 @@ class RepairsTab:
     def after_open(self, this, liPage, lbFlag, result):
         try:
             if self._next_active is not None and result:
-                self.select(self._next_active, f'page {int(liPage)} opened')
+                page = self._opening if self._opening is not None else int(liPage)   # the page that opened
+                self.select(self._next_active, f'page {page} opened')
             self._next_active = None
         except Exception:
             self.log.exception('after_open failed')

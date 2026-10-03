@@ -49,8 +49,8 @@ from pymhf.gui.decorators import no_gui
 import nmspy.data.types as nms
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent))
-from mod import game  # noqa: E402
+sys.path.insert(0, str(HERE.parent / 'NMSTrackerMod'))
+from nmstracker import game  # noqa: E402
 
 logger = logging.getLogger('S3c')
 

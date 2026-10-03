@@ -1,4 +1,4 @@
-"""Offline tests for mod/game.py and the mod entry file.
+"""Offline tests for nmstracker/game.py and the mod entry file.
 
 No game runs here. Stores are built in ctypes buffers laid out like game memory, and game
 calls are intercepted just before they would jump into NMS.exe: the test runs ctypes'
@@ -14,13 +14,13 @@ from types import SimpleNamespace
 
 os.environ.setdefault('PYTEST_VERSION', '1')      # pyMHF prompts on import outside a real console
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'NMSTrackerMod'))
 
 try:
     from pymhf.core.functions import _get_funcdef
     from pymhf.core.hooking import FunctionHook
 
-    from mod import game
+    from nmstracker import game
     HAVE_NMSPY = True
 except ImportError:                                # pragma: no cover - NMS.py not installed
     HAVE_NMSPY = False
@@ -575,7 +575,7 @@ class BuildTest(unittest.TestCase):
 class ModEntryTest(unittest.TestCase):
     def load(self):
         import importlib.util
-        spec = importlib.util.spec_from_file_location('nmstracker_mod', ROOT / 'mod' / 'nmstracker_mod.py')
+        spec = importlib.util.spec_from_file_location('nmstracker_mod', ROOT / 'NMSTrackerMod' / 'nmstracker_mod.py')
         m = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(m)
         return m
@@ -655,7 +655,7 @@ class ModEntryTest(unittest.TestCase):
 
     def test_settings_hide_every_pymhf_window(self):
         from pymhf.utils.parse_toml import read_pymhf_settings
-        cfg = read_pymhf_settings(str(ROOT / 'mod' / 'nmstracker_mod.py'), True)
+        cfg = read_pymhf_settings(str(ROOT / 'NMSTrackerMod' / 'nmstracker_mod.py'), True)
         self.assertFalse(cfg['gui']['shown'])
         self.assertFalse(cfg['logging']['shown'])
 

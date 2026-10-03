@@ -1,0 +1,31 @@
+2026-10-03 23:51:46,537 root                     INFO   Loading pyMHF...
+2026-10-03 23:51:46,809 pymem                    DEBUG  Process 13688 is being debugged
+2026-10-03 23:51:49,381 root                     INFO   pyMHF injection complete!
+2026-10-03 23:51:49,381 root                     INFO   Loading mods
+2026-10-03 23:51:49,492 pymem                    DEBUG  Process 13688 is being debugged
+2026-10-03 23:51:49,669 root                     INFO   Loaded 3 mods and 10 hooks in 0.288s
+2026-10-03 23:51:49,678 pymhf.core.utils         WARNING Cannot find window handle for PID 13688
+2026-10-03 23:51:49,681 root                     INFO   Serving on executor ('127.0.0.1', 6770)
+2026-10-03 23:51:59,952 root                     INFO   New State: APPCORESERVICES
+2026-10-03 23:51:59,953 NMSTracker               INFO   Game build 180383: supported. F7 repairs; REPAIRS tab on.
+2026-10-03 23:52:01,581 root                     INFO   New State: APPGLOBALLOAD
+2026-10-03 23:52:09,669 root                     INFO   New State: MODESELECTOR
+2026-10-03 23:52:22,672 root                     INFO   New State: APPLOCALLOAD
+2026-10-03 23:52:40,131 root                     INFO   New State: APPVIEW
+2026-10-03 23:52:44,389 NMSTracker               INFO   REPAIRS tab drawn in slot 4 (after 3 game tabs)
+2026-10-03 23:52:46,904 NMSTracker               INFO   REPAIRS selected (page 1 opened)
+2026-10-03 23:52:46,905 NMSTracker               INFO   REPAIRS clicked: asked the game for the Starship page
+2026-10-03 23:52:47,200 NMSTracker               INFO   Backed up 2 save slot(s) to %USERPROFILE%\AppData\Local\ShadowskeepLLC\NMSTrackerMod\backups before showing the REPAIRS grids
+2026-10-03 23:52:47,203 NMSTracker               INFO   Loaded 2706 item names from the game
+2026-10-03 23:52:47,205 NMSTracker               INFO   Loaded repair costs for 393 technologies; repair factor 0.5
+2026-10-03 23:52:47,206 NMSTracker               INFO   REPAIRS screen: 11 damaged: 0 repair now, 1 need materials, 10 need repair screen; materials (have / needed): Paraffinium 0 / 450, Chromatic Metal 8 / 420, Copper 0 / 200, Pure Ferrite 2 / 125, Magnetised Ferrite 16 / 100, Activated Copper 0 / 75, Wiring Loom 1 / 3
+2026-10-03 23:52:47,207 NMSTracker               INFO   REPAIRS screen: 4 rows, 3 layers to hide, 6 grid layers, 2 grid labels, section1=yes
+2026-10-03 23:52:47,207 NMSTracker               INFO   REPAIRS screen drawn (grids: hidden)
+2026-10-03 23:52:47,214 NMSTracker               INFO   REPAIRS materials grid: 7 slots (SQU_INV_REGULAR, 10 columns)
+2026-10-03 23:52:47,215 NMSTracker               INFO   REPAIRS parts grid: 11 slots (SQU_INV_TECH, 10 columns)
+2026-10-03 23:52:47,215 NMSTracker               INFO   REPAIRS screen drawn (grids: mod)
+2026-10-03 23:52:59,752 NMSTracker               INFO   Report: %USERPROFILE%\Dev\Game-addons\nms-tracker-mod\NMSTrackerMod\reports\repair-20261003-235259.json
+2026-10-03 23:52:59,753 NMSTracker               INFO   not enough materials for any repair on your ship - short of 75 Activated Copper - 10 parts need their repair screen
+2026-10-03 23:53:02,131 NMSTracker               INFO   Report: %USERPROFILE%\Dev\Game-addons\nms-tracker-mod\NMSTrackerMod\reports\repair-20261003-235302.json
+2026-10-03 23:53:02,132 NMSTracker               INFO   not enough materials for any repair on your ship - short of 75 Activated Copper - 10 parts need their repair screen
+2026-10-03 23:53:15,497 NMSTracker               INFO   REPAIRS left (page 7 opened)

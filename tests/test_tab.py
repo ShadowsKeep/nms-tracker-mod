@@ -1,4 +1,4 @@
-"""Offline tests for mod/tab.py (the REPAIRS tab), against fake game memory.
+"""Offline tests for nmstracker/tab.py (the REPAIRS tab), against fake game memory.
 
 A fake frontend manager, tab list (Exosuit, Starship, Multi-Tool) and tab elements are built in
 ctypes buffers. Game calls are intercepted before they would reach NMS.exe: ctypes' argument
@@ -16,13 +16,13 @@ from types import SimpleNamespace
 
 os.environ.setdefault('PYTEST_VERSION', '1')
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'NMSTrackerMod'))
 
 try:
     from pymhf.core.functions import _get_funcdef
     from pymhf.core.hooking import FunctionHook
 
-    from mod import game, tab
+    from nmstracker import game, tab
     HAVE_NMSPY = True
 except ImportError:                                # pragma: no cover - NMS.py not installed
     HAVE_NMSPY = False
@@ -76,8 +76,9 @@ class RepairsTabTest(unittest.TestCase):
         def intercept(hook, *args, **kwargs):     # a plain function, so it binds to the hook like _call does
             return test.fake_call(hook, *args, **kwargs)
         FunctionHook._call = intercept
-        self.requests, self.changes = [], []
-        self.tab = tab.RepairsTab(logging.getLogger('test'), lambda on, why: self.changes.append(on))
+        self.requests, self.changes, self.whys = [], [], []
+        self.tab = tab.RepairsTab(logging.getLogger('test'),
+                                  lambda on, why: (self.changes.append(on), self.whys.append(why)))
         self.set_page(0)
 
     def tearDown(self):
@@ -191,6 +192,8 @@ class RepairsTabTest(unittest.TestCase):
         self.assertEqual(self.prev_next(False), 4)                  # A from REPAIRS -> last tab
         self.switch()
         self.assertFalse(self.tab.active)
+        # the log names the page that really opened, also when A/D was swapped onto Starship
+        self.assertEqual(self.whys, ['page 1 opened', 'page 0 opened', 'page 1 opened', 'page 4 opened'])
 
     def test_middle_tabs_are_left_alone(self):
         self.set_page(0)

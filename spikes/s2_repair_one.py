@@ -53,8 +53,8 @@ from nmspy.data.enums import InventoryChoice
 from nmspy.decorators import main_loop
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent))
-from mod import backup  # noqa: E402
+sys.path.insert(0, str(HERE.parent / 'NMSTrackerMod'))
+from nmstracker import backup  # noqa: E402
 
 logger = logging.getLogger('S2')
 

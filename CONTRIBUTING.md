@@ -15,20 +15,20 @@ These are what make the mod safe to run on real saves; changes that break them w
 - **Saves are backed up before the mod changes anything**, and the mod never writes save files
   itself.
 - **Nothing the game draws for the mod can act on real items.** The REPAIRS grids are
-  display-only copies, drawn locked with action mask 0 (see `mod/grids.py`).
+  display-only copies, drawn locked with action mask 0 (see `NMSTrackerMod/nmstracker/grids.py`).
 - **No extra windows.** pyMHF's GUI and log console stay hidden; the mod talks to the player
   through the game's own on-screen messages.
 - **The mod switches itself off on any game build it wasn't checked against** (`GAME_BUILD` in
-  `mod/game.py`).
+  `NMSTrackerMod/nmstracker/game.py`).
 
 ## Setting up
 
 - Windows, No Man's Sky on Steam, and Python 3.9 to 3.13 from python.org (not the Microsoft
   Store build).
 - `python -m pip install -r requirements.txt`. NMS.py is made for one game build, so its version
-  has to match the build in `mod/game.py`.
-- Run it with the game closed: `cd mod`, then `pymhf run nmstracker_mod.py`. Logs go to
-  `mod/logs/`.
+  has to match the build in `NMSTrackerMod/nmstracker/game.py`.
+- Run it with the game closed: `cd NMSTrackerMod`, then `pymhf run nmstracker_mod.py`. Logs go to
+  `NMSTrackerMod/logs/`.
 
 ## Tests
 
@@ -42,10 +42,18 @@ arguments. One test also checks the installed NMS.exe build, if it finds the gam
 to your `NMS.exe` if it isn't at the default Steam path); otherwise it is skipped. GitHub Actions
 runs the suite on every push and pull request.
 
+## Layout and packaging
+
+pyMHF loads every `.py` file in an NMS.py mod folder, and one level down, as a mod. So
+`NMSTrackerMod/` holds only one `.py` file, `nmstracker_mod.py`, and all the mod's code lives in
+the `nmstracker/` package below it, which pyMHF never scans. Keep new modules in `nmstracker/`.
+`python tools/package.py` builds the player download, `dist/NMSTrackerMod.zip` (CI builds it
+too).
+
 ## Game functions
 
 - **Use NMS.py's declarations first.** Only declare a function the mod needs when NMS.py doesn't
-  have it yet, and then in `mod/nms_ext.py`, the way NMS.py does: on its game class, with `this`
+  have it yet, and then in `NMSTrackerMod/nmstracker/nms_ext.py`, the way NMS.py does: on its game class, with `this`
   typed as `"_Pointer[<that class>]"` (page helpers as static `cGcFrontendPageFunctions`
   functions taking the page first), found by a byte pattern that matches exactly once, with the
   RVA and what it does in a comment.
@@ -58,9 +66,9 @@ runs the suite on every push and pull request.
 ## When the game updates
 
 1. Update NMS.py to the release for the new build and pin it in `requirements.txt`.
-2. Check that every byte pattern in `mod/` still matches exactly once.
-3. Re-check every data offset that carries a build comment (`mod/game.py`, `mod/tab.py`,
-   `mod/screen.py`, `mod/grids.py`): where NMS.py now has the field, use it instead.
+2. Check that every byte pattern in `NMSTrackerMod/` still matches exactly once.
+3. Re-check every data offset that carries a build comment (`NMSTrackerMod/nmstracker/game.py`, `NMSTrackerMod/nmstracker/tab.py`,
+   `NMSTrackerMod/nmstracker/screen.py`, `NMSTrackerMod/nmstracker/grids.py`): where NMS.py now has the field, use it instead.
 4. Bump `GAME_BUILD`, run the tests, then test in game: the tab (click, A/D, Esc, clicking
    Starship), the screen and grids on a damaged ship, F7 in a repair screen and elsewhere, and
    compare the save before and after.
@@ -82,4 +90,4 @@ runs the suite on every push and pull request.
 ## Reporting bugs
 
 Use the bug report form. It asks for the game build, the NMS.py and pyMHF versions, and the log
-from `mod/logs/` (remove your user name from the paths). Please don't attach save files publicly.
+from `NMSTrackerMod/logs/` (remove your user name from the paths). Please don't attach save files publicly.

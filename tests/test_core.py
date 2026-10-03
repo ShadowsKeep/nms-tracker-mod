@@ -2,9 +2,9 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'NMSTrackerMod'))
 
-from mod.core import Slot, merge_cost, plan_repairs, repair_board, repair_panel  # noqa: E402
+from nmstracker.core import Slot, merge_cost, plan_repairs, repair_board, repair_panel  # noqa: E402
 
 
 def slot(key, *cost, name=None):
@@ -127,13 +127,13 @@ class RepairPanelTest(unittest.TestCase):
         self.assertEqual([r.fill for r in panel.rows], [25.0, 50.0, 25.0, 20.0, 16.7])
 
     def test_have_needed_text(self):
-        from mod.core import BoardMaterial, have_needed
+        from nmstracker.core import BoardMaterial, have_needed
         self.assertEqual(have_needed(BoardMaterial('CU', 75, 0)), '0 / 75')
         self.assertEqual(have_needed(BoardMaterial('CU', 1500, 1200)), '1,200 / 1,500')
         self.assertEqual(have_needed(BoardMaterial('CU', 75, 9000)), '75 / 75')    # capped: enough
 
     def test_board_log_line(self):
-        from mod.core import board_text
+        from nmstracker.core import board_text
         board = repair_board([slot(1, ('CU', 75)), Slot(2, 'DMG2', 'Slot 2', None), slot(3, ('SEAL', 1))],
                              {1}, {'SEAL': 1})
         self.assertEqual(board_text(board, lambda g: {'CU': 'Activated Copper'}.get(g, g)),

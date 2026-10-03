@@ -44,8 +44,8 @@ import nmspy.data.types as nms
 from nmspy.decorators import main_loop, on_state_change
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent))
-from mod import game  # noqa: E402  (only for the on-screen message)
+sys.path.insert(0, str(HERE.parent / 'NMSTrackerMod'))
+from nmstracker import game  # noqa: E402  (only for the on-screen message)
 
 logger = logging.getLogger('S3')
 KEYWORDS = ('INVENTORY', 'TAB', 'SHIP', 'EQUIP', 'REPAIR', 'MAINTENANCE', 'SLOT')

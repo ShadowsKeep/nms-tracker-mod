@@ -3,7 +3,7 @@ Display-only inventory stores for the REPAIRS screen's two grids (damaged parts,
 
 Each DisplayStore is a cGcInventoryStore (0x248 bytes, NMS.py nmspy.data.types) in memory the mod
 owns, holding copies of elements. The game only ever gets its address to draw it, locked and with
-action mask 0 (see mod/grids.py and work/re/notes_inventory_grid.txt).
+action mask 0 (see nmstracker/grids.py and work/re/notes_inventory_grid.txt).
 
 - The store is built ONCE by the game's own constructor (RVA 0x4CA2A0, allocates nothing). Its
   hash map at +0x208 needs self-pointers (+0x218 = +0x220 = store+0x230) that the grid reads for

@@ -6,7 +6,7 @@ page's two grids: damaged parts in the tech grid, the materials they need in the
 game draws them exactly like its own inventories, fully locked. Static scan and reasoning:
 work/re/notes_inventory_grid.txt (build 179666; re-checked for 180383 in notes_180383.txt).
 
-cGcFrontendPageFunctions.DoInventory (mod/nms_ext.py, static: page, store, layer, bAccessible,
+cGcFrontendPageFunctions.DoInventory (nmstracker/nms_ext.py, static: page, store, layer, bAccessible,
 slotActions*, bViewOnly, bool* out, mask, minRows, columns, slotSize, bNoScroll). The mod calls
 through with:
 - store = a DisplayStore (built with the game's constructor);

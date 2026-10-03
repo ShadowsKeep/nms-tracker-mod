@@ -1,4 +1,4 @@
-"""Offline tests for mod/display.py: display-only stores read back through NMS.py's own
+"""Offline tests for nmstracker/display.py: display-only stores read back through NMS.py's own
 cGcInventoryStore mapping and the mod's readers, like the game's memory would be."""
 import ctypes
 import os
@@ -8,10 +8,10 @@ from pathlib import Path
 
 os.environ.setdefault('PYTEST_VERSION', '1')
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'NMSTrackerMod'))
 
 try:
-    from mod import core, display, game
+    from nmstracker import core, display, game
     HAVE_NMSPY = True
 except ImportError:                                # pragma: no cover - NMS.py not installed
     HAVE_NMSPY = False

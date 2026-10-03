@@ -46,8 +46,8 @@ from pymhf.core.memutils import get_addressof
 from pymhf.gui.decorators import no_gui
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent))
-from mod import backup, core, display, game, grids, nms_ext, screen, tab  # noqa: E402
+sys.path.insert(0, str(HERE))         # nmstracker\ sits next to this file
+from nmstracker import backup, core, display, game, grids, nms_ext, screen, tab  # noqa: E402
 
 import nmspy.data.types as nms  # noqa: E402
 from nmspy.common import gameData  # noqa: E402
@@ -117,7 +117,7 @@ class NMSTrackerMod(Mod):
         except Exception:
             logger.exception('Could not check the cost setting the game used')
 
-    # ── the REPAIRS tab: thin hooks, all logic in mod/tab.py ─────────────────
+    # ── the REPAIRS tab: thin hooks, all logic in nmstracker/tab.py ─────────────────
     # `this` arrives as a pointer to its class (NMS.py style); the logic works on addresses.
     @nms_ext.cGcFrontendManager.PrevNextPage.before
     def _tab_prev_next_before(self, this, lbNext):
@@ -137,7 +137,7 @@ class NMSTrackerMod(Mod):
         self.tab.after_open(get_addressof(this), lePage, lbTransitionRight, _result_)
         self.screen.forget()                    # a page open reloads the layout: old elements are gone
 
-    # ── the REPAIRS grids: all logic in mod/grids.py ─────────────────────────
+    # ── the REPAIRS grids: all logic in nmstracker/grids.py ─────────────────────────
     @nms_ext.cGcFrontendPageFunctions.DoInventory.before
     def _grid_before(self, lpPage, lpInventory, lpInventoryGuiLayer, lbAccessible, lEmptySlotActions, lbViewOnly,
                      lpbOut, liPopupActions, liMinRows, liSlotsWide, liSlotSize, lbNoScroll):

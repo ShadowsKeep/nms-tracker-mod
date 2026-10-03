@@ -22,3 +22,9 @@ jobs:
         env:
           PYTEST_VERSION: "1"     # pyMHF asks questions on import outside a real console otherwise
         run: python -m unittest discover -s tests -v
+      - name: Build the player zip
+        run: python tools/package.py
+      - uses: actions/upload-artifact@v7
+        with:
+          name: NMSTrackerMod
+          path: dist/NMSTrackerMod.zip

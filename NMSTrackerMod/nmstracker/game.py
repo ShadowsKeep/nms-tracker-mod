@@ -3,7 +3,7 @@ Reading the game's inventories and repair state, costs, item names, messages, an
 loop. Imported by the NMS.py mod (nmstracker_mod.py); tests import it offline with
 PYTEST_VERSION=1 set (pyMHF prompts on import outside a real console otherwise).
 
-Game functions come from NMS.py where it declares them, otherwise from mod/nms_ext.py (declared
+Game functions come from NMS.py where it declares them, otherwise from nmstracker/nms_ext.py (declared
 the NMS.py way). Structures are read with NMS.py's classes; a raw offset is used only where build
 being played differs from what NMS.py describes, or where NMS.py has no field, with a note.
 

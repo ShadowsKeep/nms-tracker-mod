@@ -10,9 +10,9 @@ spikes/MOD_SAVES/
 spikes/.*.cache/
 spikes/s*-*.json
 # pyMHF / mod output next to the mod file
-mod/logs/
-mod/reports/
-mod/MOD_SAVES/
-mod/.*.cache/
+NMSTrackerMod/logs/
+NMSTrackerMod/reports/
+NMSTrackerMod/MOD_SAVES/
+NMSTrackerMod/.*.cache/
 # sanitized copies of in-game test logs are published on purpose
 !test-logs/**
